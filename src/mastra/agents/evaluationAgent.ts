@@ -24,5 +24,5 @@ export const evaluationAgent = new Agent({
   - isRelevant: boolean indicating if the result is relevant
   - reason: brief explanation of your decision
   `,
-  model: process.env.MODEL || 'openai/gpt-4.1',
+  model: process.env.MODEL || 'openai/gpt-5.2',
 });

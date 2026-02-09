@@ -24,5 +24,5 @@ export const reportAgent = new Agent({
 
   Structure your reports with clear sections, headings, and focus on synthesizing the information
   into a cohesive narrative rather than simply listing facts.`,
-  model: process.env.MODEL || 'openai/gpt-4.1',
+  model: process.env.MODEL || 'openai/gpt-5.2',
 });
