@@ -22,7 +22,20 @@ export const peopleSearchTool = createTool({
     linkedinOnly: z
       .boolean()
       .default(true)
-      .describe('If true, restrict results to LinkedIn person profile paths'),
+      .describe('If true, restrict results to LinkedIn domains'),
+  }),
+  outputSchema: z.object({
+    results: z.array(
+      z.object({
+        title: z.string(),
+        url: z.string(),
+        publishedDate: z.string().nullable(),
+        author: z.string().nullable(),
+        summary: z.string().nullable(),
+        content: z.string(),
+      }),
+    ),
+    error: z.string().optional(),
   }),
   execute: async inputData => {
     const { query, numResults, linkedinOnly } = inputData;
@@ -37,7 +50,7 @@ export const peopleSearchTool = createTool({
       const searchOptions = {
         category: 'people' as const,
         numResults,
-        includeDomains: linkedinOnly ? ['linkedin.com/in', 'www.linkedin.com/in'] : undefined,
+        includeDomains: linkedinOnly ? ['linkedin.com', 'www.linkedin.com'] : undefined,
       };
 
       const { results } = await exa.search(query, searchOptions);
