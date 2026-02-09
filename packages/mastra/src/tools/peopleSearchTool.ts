@@ -3,7 +3,14 @@ import { z } from 'zod';
 import Exa from 'exa-js';
 import 'dotenv/config';
 
-const exa = new Exa(process.env.EXA_API_KEY);
+const getExaClient = () => {
+  const apiKey = process.env.EXA_API_KEY;
+  if (!apiKey) {
+    throw new Error('Missing EXA_API_KEY');
+  }
+
+  return new Exa(apiKey);
+};
 
 export const peopleSearchTool = createTool({
   id: 'people-search',
@@ -25,6 +32,7 @@ export const peopleSearchTool = createTool({
         console.error('Error: EXA_API_KEY not found in environment variables');
         return { results: [], error: 'Missing API key' };
       }
+      const exa = getExaClient();
 
       const searchOptions = {
         category: 'people' as const,
@@ -44,7 +52,7 @@ export const peopleSearchTool = createTool({
           url: result.url,
           publishedDate: result.publishedDate || null,
           author: result.author || null,
-          summary: result.summary || null,
+          summary: result.text ? result.text.substring(0, 240) : null,
           content: result.text || '',
         })),
       };

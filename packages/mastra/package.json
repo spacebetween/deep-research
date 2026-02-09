@@ -1,0 +1,30 @@
+{
+  "name": "@deep-research/mastra",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "mastra dev --dir ./src/mastra",
+    "build": "mastra build --dir ./src/mastra",
+    "start": "mastra start --dir ./src/mastra"
+  },
+  "dependencies": {
+    "@mastra/core": "latest",
+    "@mastra/loggers": "latest",
+    "@mastra/memory": "latest",
+    "@mastra/observability": "latest",
+    "@mastra/pg": "latest",
+    "ai": "^5.0.121",
+    "dotenv": "^17.2.3",
+    "exa-js": "^2.0.9",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.9",
+    "mastra": "latest",
+    "typescript": "^5.9.3"
+  }
+}

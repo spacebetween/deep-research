@@ -3,8 +3,14 @@ import { z } from 'zod';
 import Exa from 'exa-js';
 import 'dotenv/config';
 
-// Initialize Exa client
-const exa = new Exa(process.env.EXA_API_KEY);
+const getExaClient = () => {
+  const apiKey = process.env.EXA_API_KEY;
+  if (!apiKey) {
+    throw new Error('Missing EXA_API_KEY');
+  }
+
+  return new Exa(apiKey);
+};
 
 export const webSearchTool = createTool({
   id: 'web-search',
@@ -21,6 +27,7 @@ export const webSearchTool = createTool({
         console.error('Error: EXA_API_KEY not found in environment variables');
         return { results: [], error: 'Missing API key' };
       }
+      const exa = getExaClient();
 
       console.log(`Searching web for: "${query}"`);
       const { results } = await exa.search(query, {

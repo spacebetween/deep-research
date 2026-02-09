@@ -1,34 +1,26 @@
 {
-  "name": "template-deep-research",
+  "name": "deep-research-monorepo",
+  "private": true,
   "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "mastra dev",
-    "build": "mastra build",
-    "start": "mastra start"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "Apache-2.0",
-  "description": "Advanced AI deep research assistant using Mastra's workflows and agent capabilities. Creates an interactive, human-in-the-loop research system that allows users to explore topics, evaluate results, and generate comprehensive reports.",
+  "description": "Monorepo for Next.js chat app and Mastra research agents",
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "engines": {
     "node": ">=22.13.0"
   },
-  "dependencies": {
-    "@mastra/core": "latest",
-    "@mastra/libsql": "latest",
-    "@mastra/loggers": "latest",
-    "@mastra/memory": "latest",
-    "@mastra/observability": "latest",
-    "ai": "^5.0.121",
-    "exa-js": "^2.0.9",
-    "zod": "^3.25.76"
+  "scripts": {
+    "dev": "npm run dev --workspace @deep-research/web",
+    "dev:web": "npm run dev --workspace @deep-research/web",
+    "dev:mastra": "npm run dev --workspace @deep-research/mastra",
+    "build": "npm run build --workspace @deep-research/web",
+    "build:web": "npm run build --workspace @deep-research/web",
+    "start": "npm run start --workspace @deep-research/web"
   },
   "devDependencies": {
     "@types/node": "^24.10.9",
-    "mastra": "latest",
     "typescript": "^5.9.3"
   }
 }

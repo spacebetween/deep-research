@@ -1,65 +1,76 @@
-# Deep Research Assistant with Mastra
+# Deep Research Monorepo
 
-This project implements an advanced AI deep research assistant using Mastra's workflows and agent capabilities. It creates an interactive, human-in-the-loop research system that allows users to explore topics, evaluate results, and generate comprehensive reports.
+Monorepo containing:
 
-## Implementation Approach
+- `apps/web`: Next.js chat interface and API routes
+- `packages/mastra`: Mastra agents, tools, and workflows
 
-The research assistant is built on Mastra's workflows architecture for better orchestration and human interaction:
+The chat API is non-streaming and currently targets `peopleResearchAgent` by default.
 
-1. **Workflow-Based Architecture**:
-   - `mainWorkflow`: Coordinates the entire research process
-   - `researchWorkflow`: Handles the core research functionality with suspend/resume for user interaction
-   - Human-in-the-loop experience with approval gates and iterative research
-
-2. **Research Agent with Custom Tools**:
-   - `webSearchTool`: Searches the web using the Exa API for relevant information
-   - `evaluateResultTool`: Assesses result relevance to the research topic
-   - `extractLearningsTool`: Identifies key learnings and generates follow-up questions
-
-3. **Report Generation**:
-   - `reportAgent`: Transforms research findings into comprehensive markdown reports
-   - Returns report content directly after user approval of research quality
-
-## Key Benefits of Mastra vNext Implementation
-
-1. **True Human-in-the-Loop Research**: Users can guide the research process, approve findings, and iterate when needed
-
-2. **Suspend/Resume Capabilities**: The workflow can pause at strategic points to collect user input and feedback
-
-3. **Structured Workflow**: Clear separation between research, approval, and report generation phases
-
-4. **Resilient Operation**: Robust error handling and fallback mechanisms when web searches fail
-
-5. **Modular Design**: Each component (workflows, agents, tools) can be maintained and upgraded independently
-
-## How to Use
+## Workspace setup
 
 ```bash
-# Install dependencies
 npm install
+```
 
-# Run the research assistant
+## Run locally
+
+```bash
 npm run dev
 ```
 
-Follow the interactive prompts:
+Open `http://localhost:3000`.
 
-1. Enter your research topic
-2. Review the research findings
-3. Approve or reject the research results
-4. If approved, a comprehensive report will be returned as output
+## Environment variables
 
-## Required Environment Variables
+Create `.env` in the repo root:
 
-Create a `.env` file with:
-
-```
-OPENAI_API_KEY=""
-EXA_API_KEY="your-exa-api-key"
+```bash
+MODEL=openai/gpt-4o-mini
+OPENAI_API_KEY=
+EXA_API_KEY=
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/deep_research
 ```
 
-## Required Dependencies
+`DATABASE_URL` is required because Mastra storage is configured with Postgres.
 
-- `@mastra/core`: Core Mastra functionality with vNext workflows
-- `exa-js`: Exa API client for web search
-- `zod`: Schema definition and validation for workflows
+## Monorepo structure
+
+```text
+apps/
+  web/
+    app/
+      api/chat/route.ts
+      api/health/route.ts
+packages/
+  mastra/
+    src/
+      agents/
+      tools/
+      workflows/
+```
+
+## Azure App Service deployment (single app)
+
+Deployment is configured via GitHub Actions in `.github/workflows/deploy-azure-webapp.yml`.
+
+1. Create an Azure App Service (Linux, Node 24).
+2. Add GitHub repository secrets:
+- `AZURE_WEBAPP_NAME`
+- `AZURE_WEBAPP_PUBLISH_PROFILE`
+3. Configure App Service settings:
+- `MODEL`
+- `OPENAI_API_KEY`
+- `EXA_API_KEY`
+- `DATABASE_URL`
+- `WEBSITE_NODE_DEFAULT_VERSION` = `~24`
+4. Push to `main` to deploy.
+
+The workflow builds Next.js standalone output and deploys `release.zip` to the App Service.
+
+## API endpoints
+
+- `POST /api/chat`:
+  - Request body: `{ "agentId": "peopleResearchAgent", "messages": [{"role":"user","content":"..."}] }`
+  - Response body: `{ "text": "..." }`
+- `GET /api/health`: basic health probe.
