@@ -18,11 +18,13 @@ export const peopleSearchTool = createTool({
     'Search for people profiles with Exa using the people category, optionally constrained to LinkedIn profile URLs',
   inputSchema: z.object({
     query: z.string().describe('People search query, e.g. "VP Product at Microsoft in Seattle"'),
-    numResults: z.number().int().min(1).max(25).default(5),
-    linkedinOnly: z
-      .boolean()
-      .default(true)
-      .describe('If true, restrict results to LinkedIn domains'),
+    numResults: z
+      .number()
+      .int()
+      .min(1)
+      .max(25)
+      .describe('Number of profiles to return, typically 5-8'),
+    linkedinOnly: z.boolean().describe('If true, restrict results to LinkedIn domains'),
   }),
   outputSchema: z.object({
     results: z.array(

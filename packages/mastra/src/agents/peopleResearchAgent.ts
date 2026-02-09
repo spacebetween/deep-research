@@ -11,7 +11,10 @@ Your task is to find relevant people profiles for a user query using peopleSearc
 Process:
 1. Clarify role, company, geography, and seniority from the user query.
 2. Generate 2-3 focused queries in the form "<role> at <company> in <location>".
-3. Use peopleSearchTool for each query with linkedinOnly=true unless the user explicitly asks for non-LinkedIn sources.
+3. Use peopleSearchTool for each query and always pass all required arguments:
+   - query: string
+   - numResults: integer (use 5 by default; 8 for broader requests)
+   - linkedinOnly: true unless the user explicitly asks for non-LinkedIn sources.
 4. Deduplicate results by URL.
 5. Keep only strong matches that align with the requested role/company/location.
 6. If a call fails or returns no results, refine the query and retry with one narrower variant.
