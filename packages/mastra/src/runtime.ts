@@ -1,6 +1,9 @@
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability';
 import { Mastra } from '@mastra/core/mastra';
 import { PostgresStore } from '@mastra/pg';
+import { LibSQLStore } from '@mastra/libsql';
+import { dirname, resolve } from 'node:path';
+import { mkdirSync } from 'node:fs';
 import { researchWorkflow } from './workflows/researchWorkflow';
 import { learningExtractionAgent } from './agents/learningExtractionAgent';
 import { evaluationAgent } from './agents/evaluationAgent';
@@ -12,18 +15,33 @@ import { peopleResearchAgent } from './agents/peopleResearchAgent';
 
 let mastraInstance: Mastra | null = null;
 
-export const createMastra = (): Mastra => {
+const createStorage = () => {
   const connectionString = process.env.DATABASE_URL;
 
-  if (!connectionString) {
-    throw new Error('DATABASE_URL is required to initialize Mastra Postgres storage');
-  }
-
-  return new Mastra({
-    storage: new PostgresStore({
+  if (connectionString) {
+    return new PostgresStore({
       id: 'mastra-storage',
       connectionString,
-    }),
+    });
+  }
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction) {
+    throw new Error('DATABASE_URL is required in production to initialize Mastra Postgres storage');
+  }
+
+  const localDbPath = resolve(process.cwd(), '.mastra-dev', 'mastra.db');
+  mkdirSync(dirname(localDbPath), { recursive: true });
+
+  return new LibSQLStore({
+    id: 'mastra-storage',
+    url: `file:${localDbPath}`,
+  });
+};
+
+export const createMastra = (): Mastra => {
+  return new Mastra({
+    storage: createStorage(),
     agents: {
       researchAgent,
       reportAgent,

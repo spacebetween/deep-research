@@ -29,10 +29,11 @@ Create `.env` in the repo root:
 MODEL=openai/gpt-4o-mini
 OPENAI_API_KEY=
 EXA_API_KEY=
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/deep_research
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/deep_research  # optional in local dev, required in production
 ```
 
-`DATABASE_URL` is required because Mastra storage is configured with Postgres.
+If `DATABASE_URL` is not set in local development, the app falls back to a local LibSQL file at `.mastra-dev/mastra.db`.
+In production, `DATABASE_URL` is required and Postgres is used.
 
 ## Monorepo structure
 
