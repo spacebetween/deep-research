@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { z } from 'zod';
 import { AppShell } from '../../components/ui/app-shell';
 import { ChatComposer } from '../../components/ui/chat-composer';
+import { ChatInstructions } from '../../components/ui/chat-instructions';
 import { ChatMessage } from '../../components/ui/chat-message';
 import { Panel } from '../../components/ui/panel';
 import { Pill } from '../../components/ui/pill';
@@ -78,12 +79,6 @@ type ConversationMessage = {
   result?: RecruiterWorkflowResult;
 };
 
-const initialMessage: ConversationMessage = {
-  role: 'assistant',
-  content:
-    'Define the hiring brief and Bad Unicorn will generate candidate intelligence. Example: "Find 8 Senior Product Managers at B2B SaaS companies in Boston."',
-};
-
 const buildWorkflowSummary = (result: RecruiterWorkflowResult) => {
   const queryCount = result.queries.length;
   const candidateCount = result.candidates.length;
@@ -98,7 +93,7 @@ const buildWorkflowSummary = (result: RecruiterWorkflowResult) => {
 export default function RecruitersPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<ConversationMessage[]>([initialMessage]);
+  const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [status, setStatus] = useState('Ready');
 
   const latestResult = useMemo(() => {
@@ -157,16 +152,28 @@ export default function RecruitersPage() {
       <section className="grid flex-1 gap-4 lg:min-h-[76vh] lg:grid-cols-[minmax(320px,1fr)_minmax(380px,1fr)]">
         <section className="grid min-h-0 grid-rows-[auto_1fr] gap-2">
           <h2 className="px-1 text-xs font-medium tracking-[0.16em] text-[color:var(--text-tertiary)] uppercase">Chat</h2>
-          <Panel className="grid min-h-0 grid-rows-[1fr_auto] overflow-hidden">
+          <Panel className="grid min-h-0 grid-rows-[auto_1fr_auto] overflow-hidden">
+            <ChatInstructions
+              badge="How to use"
+              title="Define the hiring brief"
+              description='Bad Unicorn will generate candidate intelligence. Example: "Find 8 Senior Product Managers at B2B SaaS companies in Boston."'
+            />
+
             <div className="app-scrollbar flex min-h-0 flex-col gap-3 overflow-y-auto p-4 sm:p-5">
-              {messages.map((message, index) => (
-                <ChatMessage
-                  key={`${message.role}-${index}`}
-                  role={message.role}
-                  label={message.role === 'user' ? 'You' : 'Workflow'}
-                  content={message.displayContent ?? message.content}
-                />
-              ))}
+              {messages.length === 0 ? (
+                <p className="text-sm text-[color:var(--text-secondary)]">
+                  Send a prompt to start generating search criteria, queries, and candidate summaries.
+                </p>
+              ) : (
+                messages.map((message, index) => (
+                  <ChatMessage
+                    key={`${message.role}-${index}`}
+                    role={message.role}
+                    label={message.role === 'user' ? 'You' : 'Workflow'}
+                    content={message.displayContent ?? message.content}
+                  />
+                ))
+              )}
             </div>
 
             <ChatComposer
