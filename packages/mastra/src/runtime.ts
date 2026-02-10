@@ -21,8 +21,33 @@ import { recruiterCandidateWorkflow } from './workflows/recruiterCandidateWorkfl
 
 let mastraInstance: Mastra | null = null;
 
+const getDatabaseConnectionString = (): string | undefined => {
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+
+  const database = process.env.AZURE_POSTGRESQL_DATABASE;
+  const host = process.env.AZURE_POSTGRESQL_HOST;
+  const password = process.env.AZURE_POSTGRESQL_PASSWORD;
+  const user = process.env.AZURE_POSTGRESQL_USER;
+  const port = process.env.AZURE_POSTGRESQL_PORT || '5432';
+
+  if (!database || !host || !password || !user) {
+    return undefined;
+  }
+
+  const sslRaw = process.env.AZURE_POSTGRESQL_SSL ?? '';
+  const sslEnabled = ['1', 'true', 'yes', 'require'].includes(sslRaw.toLowerCase());
+  const encodedUser = encodeURIComponent(user);
+  const encodedPassword = encodeURIComponent(password);
+  const encodedDatabase = encodeURIComponent(database);
+  const sslQuery = sslEnabled ? '?sslmode=require' : '';
+
+  return `postgres://${encodedUser}:${encodedPassword}@${host}:${port}/${encodedDatabase}${sslQuery}`;
+};
+
 const createStorage = () => {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = getDatabaseConnectionString();
 
   if (connectionString) {
     return new PostgresStore({
@@ -33,7 +58,9 @@ const createStorage = () => {
 
   const isProduction = process.env.NODE_ENV === 'production';
   if (isProduction) {
-    throw new Error('DATABASE_URL is required in production to initialize Mastra Postgres storage');
+    throw new Error(
+      'DATABASE_URL or AZURE_POSTGRESQL_DATABASE/HOST/PASSWORD/PORT/SSL/USER is required in production to initialize Mastra Postgres storage',
+    );
   }
 
   const localDbPath = resolve(process.cwd(), '.mastra-dev', 'mastra.db');

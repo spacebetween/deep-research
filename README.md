@@ -33,7 +33,9 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/deep_research  # option
 ```
 
 If `DATABASE_URL` is not set in local development, the app falls back to a local LibSQL file at `.mastra-dev/mastra.db`.
-In production, `DATABASE_URL` is required and Postgres is used.
+In production, Postgres is used and you can set either:
+- `DATABASE_URL`
+- `AZURE_POSTGRESQL_DATABASE`, `AZURE_POSTGRESQL_HOST`, `AZURE_POSTGRESQL_PASSWORD`, `AZURE_POSTGRESQL_PORT`, `AZURE_POSTGRESQL_SSL`, `AZURE_POSTGRESQL_USER`
 
 ## Monorepo structure
 
@@ -53,7 +55,7 @@ packages/
 
 ## Azure App Service deployment (single app)
 
-Deployment is configured via GitHub Actions in `.github/workflows/deploy-azure-webapp.yml`.
+Deployment is configured via GitHub Actions in `.github/workflows/main_deep-research.yml`.
 
 1. Create an Azure App Service (Linux, Node 24).
 2. Add GitHub repository secrets:
@@ -63,7 +65,7 @@ Deployment is configured via GitHub Actions in `.github/workflows/deploy-azure-w
 - `MODEL`
 - `OPENAI_API_KEY`
 - `EXA_API_KEY`
-- `DATABASE_URL`
+- `DATABASE_URL` (or the `AZURE_POSTGRESQL_*` settings above)
 - `WEBSITE_NODE_DEFAULT_VERSION` = `~24`
 4. Push to `main` to deploy.
 
