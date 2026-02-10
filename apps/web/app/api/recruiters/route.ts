@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const result = await run.start({
       inputData: {
         request: parsed.query,
-        maxCandidates: parsed.maxCandidates ?? 8,
+        maxCandidates: parsed.maxCandidates ?? 5,
       },
     });
 

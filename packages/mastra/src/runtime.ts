@@ -14,6 +14,9 @@ import { generateReportWorkflow } from './workflows/generateReportWorkflow';
 import { peopleResearchAgent } from './agents/peopleResearchAgent';
 import { recruiterCriteriaAgent } from './agents/recruiterCriteriaAgent';
 import { candidateSummaryAgent } from './agents/candidateSummaryAgent';
+import { recruiterWorkflowCriteriaAgent } from './agents/recruiterWorkflowCriteriaAgent';
+import { recruiterWorkflowPeopleResearchAgent } from './agents/recruiterWorkflowPeopleResearchAgent';
+import { recruiterWorkflowCandidateSummaryAgent } from './agents/recruiterWorkflowCandidateSummaryAgent';
 import { recruiterCandidateWorkflow } from './workflows/recruiterCandidateWorkflow';
 
 let mastraInstance: Mastra | null = null;
@@ -54,6 +57,9 @@ export const createMastra = (): Mastra => {
       peopleResearchAgent,
       recruiterCriteriaAgent,
       candidateSummaryAgent,
+      recruiterWorkflowCriteriaAgent,
+      recruiterWorkflowPeopleResearchAgent,
+      recruiterWorkflowCandidateSummaryAgent,
     },
     workflows: { generateReportWorkflow, researchWorkflow, recruiterCandidateWorkflow },
     observability: new Observability({

@@ -107,13 +107,13 @@ export default function RecruitersPage() {
     setInput('');
     setMessages(current => [...current, { role: 'user', content: trimmed }]);
     setIsLoading(true);
-    setStatus('Generating candidate shortlist...');
+    setStatus('Generating 5-candidate calibration shortlist...');
 
     try {
       const response = await fetch('/api/recruiters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: trimmed, maxCandidates: 8 }),
+        body: JSON.stringify({ query: trimmed, maxCandidates: 5 }),
       });
 
       const payload = await response.json();
@@ -156,7 +156,7 @@ export default function RecruitersPage() {
             <ChatInstructions
               badge="How to use"
               title="Define the hiring brief"
-              description='Bad Unicorn will generate candidate intelligence. Example: "Find 8 Senior Product Managers at B2B SaaS companies in Boston."'
+              description='Bad Unicorn will generate a calibration shortlist. Example: "Find 5 Senior Product Managers at B2B SaaS companies in Boston."'
             />
 
             <div className="app-scrollbar flex min-h-0 flex-col gap-3 overflow-y-auto p-4 sm:p-5">

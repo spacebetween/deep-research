@@ -92,13 +92,24 @@ const defineSearchCriteriaStep = createStep({
     maxCandidates: z.number().int().min(1).max(20),
   }),
   execute: async ({ inputData, mastra }) => {
-    const maxCandidates = inputData.maxCandidates ?? 8;
-    const agent = mastra.getAgent('recruiterCriteriaAgent');
+    const maxCandidates = inputData.maxCandidates ?? 5;
+    const agent = mastra.getAgent('recruiterWorkflowCriteriaAgent');
     const response = await agent.generate(
       [
         {
           role: 'user',
-          content: `Recruiter request:\n${inputData.request}`,
+          content: `Recruiter request:
+${inputData.request}
+
+Calibration-first context:
+- This run is for an initial calibration shortlist of up to ${maxCandidates} candidates.
+- Build precise LinkedIn-oriented criteria for this initial pass.
+
+Critical requirement:
+- If the request references equipment or machinery, do not over-assume the role family.
+- Keep role inference conservative and grounded in explicit request details.
+
+Return structured criteria only.`,
         },
       ],
       {
@@ -136,12 +147,12 @@ const runCandidateSearchStep = createStep({
   }),
   execute: async ({ inputData, mastra }) => {
     const { criteria, maxCandidates } = inputData;
-    const peopleAgent = mastra.getAgent('peopleResearchAgent');
+    const peopleAgent = mastra.getAgent('recruiterWorkflowPeopleResearchAgent');
     const searchResponse = await peopleAgent.generate(
       [
         {
           role: 'user',
-          content: `Run a candidate search using these fixed constraints.
+          content: `Run a candidate calibration search using these fixed constraints.
 
 Recruiter criteria:
 ${JSON.stringify(
@@ -161,8 +172,13 @@ ${criteria.queries.map((query, index) => `${index + 1}. ${query}`).join('\n')}
 
 Rules:
 - Use peopleSearchTool for each query.
+- Source candidates only from tool results. Never fabricate any candidate fields.
+- Require a valid LinkedIn URL for every returned candidate.
 - Deduplicate by URL.
-- Keep strong matches to the criteria.
+- Keep only strong matches to the criteria.
+- Exclude candidates at the recruiting company when that company is explicitly identifiable.
+- If fewer than ${maxCandidates} qualified candidates are found, return the real count and explain shortfall in error.
+- If file-writing capability is unavailable, do not claim results were saved to files.
 - Return JSON only.`,
         },
       ],
@@ -220,7 +236,7 @@ const summarizeCandidatesStep = createStep({
   }),
   outputSchema: recruiterWorkflowOutputSchema,
   execute: async ({ inputData, mastra }) => {
-    const summaryAgent = mastra.getAgent('candidateSummaryAgent');
+    const summaryAgent = mastra.getAgent('recruiterWorkflowCandidateSummaryAgent');
     const candidates: z.infer<typeof recruiterCandidateSchema>[] = [];
 
     for (const person of inputData.people) {
