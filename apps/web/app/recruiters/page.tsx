@@ -1,8 +1,13 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { z } from 'zod';
-import styles from './page.module.css';
+import { AppShell } from '../../components/ui/app-shell';
+import { ChatComposer } from '../../components/ui/chat-composer';
+import { ChatMessage } from '../../components/ui/chat-message';
+import { Panel } from '../../components/ui/panel';
+import { Pill } from '../../components/ui/pill';
+import { ResultCard } from '../../components/ui/result-card';
 
 const recruiterCriteriaSchema = z.object({
   role: z.string(),
@@ -33,17 +38,29 @@ const recruiterApiResponseSchema = z.object({
 
 type RecruiterWorkflowResult = z.infer<typeof recruiterWorkflowResultSchema>;
 
-type ChatMessage = {
+const splitSkillsSummary = (skillsSummary: string) => {
+  const normalized = skillsSummary.trim();
+  if (!normalized) return [];
+
+  const hasStructuredDelimiters = /[\n\u2022;|]/.test(normalized);
+  const segments = hasStructuredDelimiters
+    ? normalized.split(/\r?\n|\u2022|;|\|/)
+    : normalized.split(/,\s+/);
+
+  return segments.map(segment => segment.trim()).filter(Boolean);
+};
+
+type ConversationMessage = {
   role: 'user' | 'assistant';
   content: string;
   displayContent?: string;
   result?: RecruiterWorkflowResult;
 };
 
-const initialMessage: ChatMessage = {
+const initialMessage: ConversationMessage = {
   role: 'assistant',
   content:
-    'Tell me which LinkedIn candidates you need. Example: "Find 8 Senior Product Managers at B2B SaaS companies in Boston."',
+    'Define the hiring brief and Bad Unicorn will generate candidate intelligence. Example: "Find 8 Senior Product Managers at B2B SaaS companies in Boston."',
 };
 
 const buildWorkflowSummary = (result: RecruiterWorkflowResult) => {
@@ -60,23 +77,21 @@ const buildWorkflowSummary = (result: RecruiterWorkflowResult) => {
 export default function RecruitersPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([initialMessage]);
+  const [messages, setMessages] = useState<ConversationMessage[]>([initialMessage]);
   const [status, setStatus] = useState('Ready');
 
   const latestResult = useMemo(() => {
     return [...messages].reverse().find(message => message.result)?.result ?? null;
   }, [messages]);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  async function onSubmit() {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
 
     setInput('');
     setMessages(current => [...current, { role: 'user', content: trimmed }]);
     setIsLoading(true);
-    setStatus('Defining criteria and searching candidates...');
+    setStatus('Generating candidate shortlist...');
 
     try {
       const response = await fetch('/api/recruiters', {
@@ -115,108 +130,138 @@ export default function RecruitersPage() {
   }
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Recruiter Workflow Workspace</h1>
-        <p className={styles.subtitle}>Chat on the left, workflow-driven candidate summaries on the right.</p>
-      </header>
-
-      <section className={styles.workspace}>
-        <section className={styles.column}>
-          <h2 className={styles.columnTitle}>Chat</h2>
-          <div className={styles.chatShell}>
-            <div className={styles.messages}>
+    <AppShell
+      title="Bad Unicorn Workflow Engine"
+      subtitle="Structured recruiter workflow on the left, candidate summaries and criteria intel on the right."
+    >
+      <section className="grid flex-1 gap-4 lg:min-h-[76vh] lg:grid-cols-[minmax(320px,1fr)_minmax(380px,1fr)]">
+        <section className="grid min-h-0 grid-rows-[auto_1fr] gap-2">
+          <h2 className="px-1 text-xs font-medium tracking-[0.16em] text-[color:var(--text-tertiary)] uppercase">Chat</h2>
+          <Panel className="grid min-h-0 grid-rows-[1fr_auto] overflow-hidden">
+            <div className="app-scrollbar flex min-h-0 flex-col gap-3 overflow-y-auto p-4 sm:p-5">
               {messages.map((message, index) => (
-                <article key={`${message.role}-${index}`} className={`${styles.message} ${styles[message.role]}`}>
-                  <div className={styles.meta}>{message.role === 'user' ? 'You' : 'Workflow'}</div>
-                  <div>{message.displayContent ?? message.content}</div>
-                </article>
+                <ChatMessage
+                  key={`${message.role}-${index}`}
+                  role={message.role}
+                  label={message.role === 'user' ? 'You' : 'Workflow'}
+                  content={message.displayContent ?? message.content}
+                />
               ))}
             </div>
 
-            <form className={styles.composer} onSubmit={onSubmit}>
-              <textarea
-                value={input}
-                placeholder='Describe role, company, location, and seniority. Example: "Staff Data Engineer at fintech companies in Chicago"'
-                onChange={event => setInput(event.target.value)}
-                disabled={isLoading}
-              />
-              <div className={styles.controls}>
-                <div className={styles.status}>{status}</div>
-                <button type="submit" disabled={isLoading || !input.trim()}>
-                  {isLoading ? 'Working...' : 'Search'}
-                </button>
-              </div>
-            </form>
-          </div>
+            <ChatComposer
+              value={input}
+              status={status}
+              placeholder='Describe role, company DNA, location, and seniority. Example: "Staff Data Engineer at fintech companies in Chicago"'
+              textareaLabel="Workflow search input"
+              submitLabel="Generate Candidates"
+              isLoading={isLoading}
+              onChange={setInput}
+              onSubmit={onSubmit}
+              textareaMinHeightClassName="min-h-24"
+            />
+          </Panel>
         </section>
 
-        <section className={styles.column}>
-          <h2 className={styles.columnTitle}>Workflow Results</h2>
-          <div className={styles.resultsShell}>
+        <section className="grid min-h-0 grid-rows-[auto_1fr] gap-2">
+          <h2 className="px-1 text-xs font-medium tracking-[0.16em] text-[color:var(--text-tertiary)] uppercase">Workflow Results</h2>
+          <Panel className="app-scrollbar min-h-0 overflow-y-auto p-4 sm:p-5">
             {!latestResult ? (
-              <p className={styles.emptyState}>Run a query in chat to see criteria, queries, and candidate summaries.</p>
+              <p className="text-sm text-[color:var(--text-secondary)]">
+                Run a query in chat to see criteria, queries, and candidate summaries.
+              </p>
             ) : (
-              <>
-                <div className={styles.sectionTitle}>Search Criteria</div>
-                <div className={styles.criteriaList}>
-                  <span className={styles.queryPill}>Role: {latestResult.criteria.role}</span>
-                  {latestResult.criteria.seniority ? (
-                    <span className={styles.queryPill}>Seniority: {latestResult.criteria.seniority}</span>
-                  ) : null}
-                  <span className={styles.queryPill}>LinkedIn only: {latestResult.criteria.linkedinOnly ? 'Yes' : 'No'}</span>
-                  {latestResult.criteria.companies.map((company, index) => (
-                    <span key={`${company}-${index}`} className={styles.queryPill}>
-                      Company: {company}
-                    </span>
-                  ))}
-                  {latestResult.criteria.locations.map((location, index) => (
-                    <span key={`${location}-${index}`} className={styles.queryPill}>
-                      Location: {location}
-                    </span>
-                  ))}
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <h3 className="text-xs font-medium tracking-[0.14em] text-[color:var(--text-tertiary)] uppercase">Search Criteria</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <Pill tone="blue">Role: {latestResult.criteria.role}</Pill>
+                    {latestResult.criteria.seniority ? <Pill tone="neutral">Seniority: {latestResult.criteria.seniority}</Pill> : null}
+                    <Pill tone="neutral">LinkedIn only: {latestResult.criteria.linkedinOnly ? 'Yes' : 'No'}</Pill>
+                    {latestResult.criteria.companies.map((company, index) => (
+                      <Pill key={`${company}-${index}`} tone="neutral">
+                        Company: {company}
+                      </Pill>
+                    ))}
+                    {latestResult.criteria.locations.map((location, index) => (
+                      <Pill key={`${location}-${index}`} tone="neutral">
+                        Location: {location}
+                      </Pill>
+                    ))}
+                  </div>
                 </div>
 
-                <div className={styles.sectionTitle}>Queries</div>
-                <div className={styles.queryList}>
-                  {latestResult.queries.map((query, index) => (
-                    <span key={`${query}-${index}`} className={styles.queryPill}>
-                      {query}
-                    </span>
-                  ))}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-medium tracking-[0.14em] text-[color:var(--text-tertiary)] uppercase">Queries</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {latestResult.queries.map((query, index) => (
+                      <Pill key={`${query}-${index}`} tone="blue">
+                        {query}
+                      </Pill>
+                    ))}
+                  </div>
                 </div>
 
-                {latestResult.error ? <p className={styles.error}>Tool warning: {latestResult.error}</p> : null}
+                {latestResult.error ? (
+                  <p className="rounded-lg border border-[color:var(--danger-soft)] bg-[color:var(--status-danger-bg)] px-3 py-2 text-sm text-[color:var(--status-danger-text)]">
+                    Tool warning: {latestResult.error}
+                  </p>
+                ) : null}
 
-                <div className={styles.sectionTitle}>Candidates ({latestResult.candidates.length})</div>
-                <div className={styles.cardList}>
-                  {latestResult.candidates.length === 0 ? (
-                    <p className={styles.emptyState}>No candidates returned for the latest request.</p>
-                  ) : (
-                    latestResult.candidates.map((candidate, index) => (
-                      <article key={`${candidate.linkedinUrl}-${index}`} className={styles.card}>
-                        <div className={styles.cardHeader}>
-                          <a href={candidate.linkedinUrl} target="_blank" rel="noreferrer" className={styles.cardLink}>
-                            {candidate.name}
-                          </a>
-                          <span className={`${styles.badge} ${styles.linkedin}`}>LinkedIn</span>
-                        </div>
-                        <div className={styles.cardMeta}>{candidate.headline}</div>
-                        <p className={styles.cardSummary}>
-                          <strong>Skills:</strong> {candidate.skillsSummary}
-                        </p>
-                        <p className={styles.cardSummary}>
-                          <strong>Experience:</strong> {candidate.experienceSummary}
-                        </p>
-                      </article>
-                    ))
-                  )}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-medium tracking-[0.14em] text-[color:var(--text-tertiary)] uppercase">
+                    Candidates ({latestResult.candidates.length})
+                  </h3>
+                  <div className="space-y-2.5">
+                    {latestResult.candidates.length === 0 ? (
+                      <p className="text-sm text-[color:var(--text-secondary)]">No candidates returned for the latest request.</p>
+                    ) : (
+                      latestResult.candidates.map((candidate, index) => {
+                        const skills = splitSkillsSummary(candidate.skillsSummary);
+
+                        return (
+                          <ResultCard key={`${candidate.linkedinUrl}-${index}`}>
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-semibold text-[color:var(--text-primary)]">{candidate.name}</div>
+                                <a
+                                  href={candidate.linkedinUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-1 inline-block text-xs text-[color:var(--link-primary)] transition hover:text-[color:var(--link-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg-base)]"
+                                >
+                                  {candidate.linkedinUrl}
+                                </a>
+                              </div>
+                              <Pill tone="blue">LinkedIn</Pill>
+                            </div>
+                            <div className="mt-2 text-xs text-[color:var(--text-tertiary)]">{candidate.headline}</div>
+                            <div className="mt-2 text-sm leading-relaxed text-[color:var(--text-secondary)]">
+                              <strong className="text-[color:var(--text-primary)]">Skills:</strong>
+                              {skills.length === 0 ? (
+                                <span className="ml-1">{candidate.skillsSummary}</span>
+                              ) : (
+                                <ul className="mt-1 list-disc space-y-1 pl-5">
+                                  {skills.map((skill, skillIndex) => (
+                                    <li key={`${candidate.linkedinUrl}-skill-${skillIndex}`}>{skill}</li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                            <p className="mt-2 text-sm leading-relaxed text-[color:var(--text-secondary)]">
+                              <strong className="text-[color:var(--text-primary)]">Experience:</strong> {candidate.experienceSummary}
+                            </p>
+                          </ResultCard>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
-              </>
+              </div>
             )}
-          </div>
+          </Panel>
         </section>
       </section>
-    </main>
+    </AppShell>
   );
 }

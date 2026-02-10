@@ -1,10 +1,15 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { z } from 'zod';
-import styles from './page.module.css';
+import { AppShell } from '../../components/ui/app-shell';
+import { ChatComposer } from '../../components/ui/chat-composer';
+import { ChatMessage } from '../../components/ui/chat-message';
+import { Panel } from '../../components/ui/panel';
+import { Pill } from '../../components/ui/pill';
+import { ResultCard } from '../../components/ui/result-card';
 
-type ChatMessage = {
+type ConversationMessage = {
   role: 'user' | 'assistant';
   content: string;
   displayContent?: string;
@@ -28,10 +33,10 @@ const peopleResearchResultSchema = z.object({
 
 type PeopleResearchResult = z.infer<typeof peopleResearchResultSchema>;
 
-const initialMessage: ChatMessage = {
+const initialMessage: ConversationMessage = {
   role: 'assistant',
   content:
-    'Tell me which LinkedIn candidates you want. Example: "Find 8 Senior Product Managers at B2B SaaS companies in Boston."',
+    'Name the profile archetype and Bad Unicorn will expose strong LinkedIn matches. Example: "Find 8 Senior Product Managers at B2B SaaS companies in Boston."',
 };
 
 const trimContent = (value: string, maxLength = 260) => {
@@ -80,7 +85,7 @@ const getDomain = (url: string) => {
 export default function RecruiterPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([initialMessage]);
+  const [messages, setMessages] = useState<ConversationMessage[]>([initialMessage]);
   const [status, setStatus] = useState('Ready');
 
   const historyForApi = useMemo(
@@ -92,16 +97,14 @@ export default function RecruiterPage() {
     return [...messages].reverse().find(message => message.result)?.result ?? null;
   }, [messages]);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  async function onSubmit() {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
 
     setInput('');
     setMessages(current => [...current, { role: 'user', content: trimmed }]);
     setIsLoading(true);
-    setStatus('Searching LinkedIn candidates...');
+    setStatus('Revealing candidate matches...');
 
     try {
       const response = await fetch('/api/chat', {
@@ -141,93 +144,105 @@ export default function RecruiterPage() {
   }
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>LinkedIn Recruiter Workspace</h1>
-        <p className={styles.subtitle}>Chat with `peopleResearchAgent` and review candidate matches side-by-side.</p>
-      </header>
-
-      <section className={styles.workspace}>
-        <section className={styles.column}>
-          <h2 className={styles.columnTitle}>Chat</h2>
-          <div className={styles.chatShell}>
-            <div className={styles.messages}>
+    <AppShell
+      title="Bad Unicorn Match Vault"
+      subtitle="Interrogate peopleResearchAgent and surface high-signal LinkedIn candidates in real time."
+    >
+      <section className="grid flex-1 gap-4 lg:min-h-[76vh] lg:grid-cols-[minmax(320px,1fr)_minmax(380px,1fr)]">
+        <section className="grid min-h-0 grid-rows-[auto_1fr] gap-2">
+          <h2 className="px-1 text-xs font-medium tracking-[0.16em] text-[color:var(--text-tertiary)] uppercase">Chat</h2>
+          <Panel className="grid min-h-0 grid-rows-[1fr_auto] overflow-hidden">
+            <div className="app-scrollbar flex min-h-0 flex-col gap-3 overflow-y-auto p-4 sm:p-5">
               {messages.map((message, index) => (
-                <article key={`${message.role}-${index}`} className={`${styles.message} ${styles[message.role]}`}>
-                  <div className={styles.meta}>{message.role === 'user' ? 'You' : 'Agent'}</div>
-                  <div>{message.displayContent ?? message.content}</div>
-                </article>
+                <ChatMessage
+                  key={`${message.role}-${index}`}
+                  role={message.role}
+                  label={message.role === 'user' ? 'You' : 'Agent'}
+                  content={message.displayContent ?? message.content}
+                />
               ))}
             </div>
 
-            <form className={styles.composer} onSubmit={onSubmit}>
-              <textarea
-                value={input}
-                placeholder='Describe role, company, location, and seniority. Example: "Staff Data Engineer at fintech companies in Chicago"'
-                onChange={event => setInput(event.target.value)}
-                disabled={isLoading}
-              />
-              <div className={styles.controls}>
-                <div className={styles.status}>{status}</div>
-                <button type="submit" disabled={isLoading || !input.trim()}>
-                  {isLoading ? 'Working...' : 'Search'}
-                </button>
-              </div>
-            </form>
-          </div>
+            <ChatComposer
+              value={input}
+              status={status}
+              placeholder='Describe role, company DNA, location, and seniority. Example: "Staff Data Engineer at fintech companies in Chicago"'
+              textareaLabel="Recruiter search input"
+              submitLabel="Reveal Matches"
+              isLoading={isLoading}
+              onChange={setInput}
+              onSubmit={onSubmit}
+              textareaMinHeightClassName="min-h-24"
+            />
+          </Panel>
         </section>
 
-        <section className={styles.column}>
-          <h2 className={styles.columnTitle}>Search Results</h2>
-          <div className={styles.resultsShell}>
+        <section className="grid min-h-0 grid-rows-[auto_1fr] gap-2">
+          <h2 className="px-1 text-xs font-medium tracking-[0.16em] text-[color:var(--text-tertiary)] uppercase">Search Results</h2>
+          <Panel className="app-scrollbar min-h-0 overflow-y-auto p-4 sm:p-5">
             {!latestResult ? (
-              <p className={styles.emptyState}>Run a query in chat to see candidate matches and search queries.</p>
+              <p className="text-sm text-[color:var(--text-secondary)]">
+                Run a query in chat to see candidate matches and search queries.
+              </p>
             ) : (
-              <>
-                <div className={styles.sectionTitle}>Queries</div>
-                <div className={styles.queryList}>
-                  {latestResult.queries.map((query, index) => (
-                    <span key={`${query}-${index}`} className={styles.queryPill}>
-                      {query}
-                    </span>
-                  ))}
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <h3 className="text-xs font-medium tracking-[0.14em] text-[color:var(--text-tertiary)] uppercase">Queries</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {latestResult.queries.map((query, index) => (
+                      <Pill key={`${query}-${index}`} tone="blue">
+                        {query}
+                      </Pill>
+                    ))}
+                  </div>
                 </div>
 
-                {latestResult.error ? <p className={styles.error}>Tool warning: {latestResult.error}</p> : null}
+                {latestResult.error ? (
+                  <p className="rounded-lg border border-[color:var(--danger-soft)] bg-[color:var(--status-danger-bg)] px-3 py-2 text-sm text-[color:var(--status-danger-text)]">
+                    Tool warning: {latestResult.error}
+                  </p>
+                ) : null}
 
-                <div className={styles.sectionTitle}>Candidates ({latestResult.people.length})</div>
-                <div className={styles.cardList}>
-                  {latestResult.people.length === 0 ? (
-                    <p className={styles.emptyState}>No candidates returned for the latest request.</p>
-                  ) : (
-                    latestResult.people.map((person, index) => {
-                      const domain = getDomain(person.url);
-                      const isLinkedIn = domain.includes('linkedin.com');
+                <div className="space-y-2">
+                  <h3 className="text-xs font-medium tracking-[0.14em] text-[color:var(--text-tertiary)] uppercase">
+                    Candidates ({latestResult.people.length})
+                  </h3>
+                  <div className="space-y-2.5">
+                    {latestResult.people.length === 0 ? (
+                      <p className="text-sm text-[color:var(--text-secondary)]">No candidates returned for the latest request.</p>
+                    ) : (
+                      latestResult.people.map((person, index) => {
+                        const domain = getDomain(person.url);
+                        const isLinkedIn = domain.includes('linkedin.com');
 
-                      return (
-                        <article key={`${person.url}-${index}`} className={styles.card}>
-                          <div className={styles.cardHeader}>
-                            <a href={person.url} target="_blank" rel="noreferrer" className={styles.cardLink}>
-                              {person.title}
-                            </a>
-                            <span className={`${styles.badge} ${isLinkedIn ? styles.linkedin : styles.other}`}>
-                              {isLinkedIn ? 'LinkedIn' : domain}
-                            </span>
-                          </div>
-                          <div className={styles.cardMeta}>{person.author || 'Unknown profile'}</div>
-                          <p className={styles.cardSummary}>
-                            {trimContent(person.summary || person.content || 'No summary available.')}
-                          </p>
-                        </article>
-                      );
-                    })
-                  )}
+                        return (
+                          <ResultCard key={`${person.url}-${index}`}>
+                            <div className="flex items-start justify-between gap-3">
+                              <a
+                                href={person.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-sm font-semibold text-[color:var(--link-primary)] transition hover:text-[color:var(--link-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg-base)]"
+                              >
+                                {person.title}
+                              </a>
+                              <Pill tone={isLinkedIn ? 'blue' : 'neutral'}>{isLinkedIn ? 'LinkedIn' : domain}</Pill>
+                            </div>
+                            <div className="mt-2 text-xs text-[color:var(--text-tertiary)]">{person.author || 'Unknown profile'}</div>
+                            <p className="mt-2 text-sm leading-relaxed text-[color:var(--text-secondary)]">
+                              {trimContent(person.summary || person.content || 'No summary available.')}
+                            </p>
+                          </ResultCard>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
-              </>
+              </div>
             )}
-          </div>
+          </Panel>
         </section>
       </section>
-    </main>
+    </AppShell>
   );
 }

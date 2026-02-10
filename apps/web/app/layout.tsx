@@ -1,20 +1,26 @@
 import type { Metadata } from 'next';
-import { Space_Grotesk, Source_Code_Pro } from 'next/font/google';
+import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 
 const sans = Space_Grotesk({
   variable: '--font-sans',
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
 });
 
-const mono = Source_Code_Pro({
+const mono = JetBrains_Mono({
   variable: '--font-mono',
   subsets: ['latin'],
+  weight: ['400', '500', '600'],
 });
 
 export const metadata: Metadata = {
-  title: 'Deep Research Chat',
-  description: 'Chat UI for Mastra research agents',
+  title: 'Bad Unicorn',
+  description: 'Bad Unicorn recruiter intelligence workspace',
+  icons: {
+    icon: '/unicornlogo.png',
+    apple: '/unicornlogo.png',
+  },
 };
 
 export default function RootLayout({
@@ -23,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${sans.variable} ${mono.variable}`}>{children}</body>
+    <html lang="en" data-theme="dark">
+      <body className={`${sans.variable} ${mono.variable} antialiased`}>{children}</body>
     </html>
   );
 }
