@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-:root {
+:root,
+:root[data-theme='dark'] {
   color-scheme: dark;
   --bg-base: #0e0b16;
   --bg-veil: rgba(14, 11, 22, 0.78);
@@ -49,6 +50,63 @@
 
   --gradient-unicorn: linear-gradient(135deg, #b026ff 0%, #6a00ff 55%, #1de9b6 100%);
   --gradient-panel-accent: linear-gradient(160deg, rgba(176, 38, 255, 0.24), rgba(106, 0, 255, 0.2), rgba(29, 233, 182, 0.1));
+  --scene-vignette: radial-gradient(ellipse at center, transparent 45%, rgba(5, 2, 10, 0.62) 100%);
+  --scene-glow-left: radial-gradient(circle at 18% -8%, rgba(176, 38, 255, 0.26) 0%, rgba(176, 38, 255, 0) 45%);
+  --scene-glow-right: radial-gradient(circle at 88% 110%, rgba(29, 233, 182, 0.18) 0%, rgba(29, 233, 182, 0) 48%);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg-base: #f7f3ff;
+  --bg-veil: rgba(255, 255, 255, 0.78);
+  --bg-panel: #ffffff;
+  --bg-panel-muted: #f3ecff;
+  --surface-elevated: rgba(47, 26, 76, 0.06);
+  --input-bg: rgba(255, 255, 255, 0.92);
+  --input-border: rgba(122, 59, 186, 0.32);
+  --border-soft: rgba(47, 26, 76, 0.18);
+  --border-strong: rgba(122, 59, 186, 0.46);
+  --text-primary: #1f1530;
+  --text-secondary: #4a3d66;
+  --text-muted: #6d6089;
+  --text-tertiary: #5b4b79;
+  --text-subtle: #786b95;
+  --focus-ring: #0fae8d;
+  --link-primary: #6730c4;
+  --link-primary-hover: #4e229f;
+  --shadow-color: rgba(44, 30, 68, 0.24);
+  --shadow-accent: rgba(122, 59, 186, 0.44);
+  --grid-line: rgba(91, 75, 121, 0.11);
+
+  --accent-primary: #7a3bba;
+  --accent-primary-soft: rgba(122, 59, 186, 0.22);
+  --accent-secondary: #0fae8d;
+  --accent-secondary-soft: rgba(15, 174, 141, 0.24);
+  --danger: #db3b5f;
+  --danger-soft: rgba(219, 59, 95, 0.22);
+
+  --status-info-bg: rgba(15, 174, 141, 0.15);
+  --status-info-text: #0b6352;
+  --status-danger-bg: rgba(219, 59, 95, 0.14);
+  --status-danger-text: #931b3b;
+  --status-neutral-bg: rgba(47, 26, 76, 0.08);
+  --status-neutral-text: #4f3f6f;
+
+  --message-user-bg: linear-gradient(155deg, rgba(122, 59, 186, 0.24), rgba(206, 175, 245, 0.9));
+  --message-assistant-bg: linear-gradient(155deg, rgba(255, 255, 255, 0.94), rgba(243, 236, 255, 0.95));
+  --message-assistant-border: rgba(122, 59, 186, 0.2);
+
+  --pill-neutral-bg: rgba(47, 26, 76, 0.06);
+  --pill-neutral-border: rgba(47, 26, 76, 0.18);
+  --pill-neutral-text: #4a3d66;
+  --pill-primary-text: #5a2da6;
+  --pill-danger-text: #931b3b;
+
+  --gradient-unicorn: linear-gradient(135deg, #7a3bba 0%, #6136c5 55%, #0fae8d 100%);
+  --gradient-panel-accent: linear-gradient(160deg, rgba(122, 59, 186, 0.18), rgba(97, 54, 197, 0.14), rgba(15, 174, 141, 0.1));
+  --scene-vignette: radial-gradient(ellipse at center, transparent 44%, rgba(225, 217, 239, 0.7) 100%);
+  --scene-glow-left: radial-gradient(circle at 18% -8%, rgba(122, 59, 186, 0.22) 0%, rgba(122, 59, 186, 0) 46%);
+  --scene-glow-right: radial-gradient(circle at 88% 110%, rgba(15, 174, 141, 0.2) 0%, rgba(15, 174, 141, 0) 48%);
 }
 
 * {
@@ -64,10 +122,7 @@ body {
 body {
   font-family: var(--font-sans), sans-serif;
   color: var(--text-primary);
-  background:
-    radial-gradient(circle at 18% -8%, rgba(176, 38, 255, 0.26) 0%, rgba(176, 38, 255, 0) 45%),
-    radial-gradient(circle at 88% 110%, rgba(29, 233, 182, 0.18) 0%, rgba(29, 233, 182, 0) 48%),
-    var(--bg-base);
+  background: var(--scene-glow-left), var(--scene-glow-right), var(--bg-base);
   line-height: 1.5;
 }
 

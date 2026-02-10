@@ -2,6 +2,20 @@ import type { Metadata } from 'next';
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 
+const themeInitScript = `
+(() => {
+  try {
+    const storageKey = 'bad-unicorn-theme';
+    const savedTheme = localStorage.getItem(storageKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const nextTheme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : prefersDark ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', nextTheme);
+  } catch {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+})();
+`;
+
 const sans = Space_Grotesk({
   variable: '--font-sans',
   subsets: ['latin'],
@@ -29,7 +43,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="dark">
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className={`${sans.variable} ${mono.variable} antialiased`}>{children}</body>
     </html>
   );

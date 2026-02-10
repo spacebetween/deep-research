@@ -50,6 +50,27 @@ const splitSkillsSummary = (skillsSummary: string) => {
   return segments.map(segment => segment.trim()).filter(Boolean);
 };
 
+const splitExperienceSummary = (experienceSummary: string) => {
+  const normalized = experienceSummary.trim();
+  if (!normalized) return [];
+
+  const hasStructuredDelimiters = /[\n\u2022;|]/.test(normalized);
+  if (hasStructuredDelimiters) {
+    return normalized
+      .split(/\r?\n|\u2022|;|\|/)
+      .map(segment => segment.trim())
+      .filter(Boolean);
+  }
+
+  const sentenceSegments = normalized
+    .split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
+    .map(segment => segment.trim())
+    .filter(Boolean);
+
+  if (sentenceSegments.length > 1) return sentenceSegments;
+  return [normalized];
+};
+
 type ConversationMessage = {
   role: 'user' | 'assistant';
   content: string;
@@ -131,8 +152,7 @@ export default function RecruitersPage() {
 
   return (
     <AppShell
-      title="Bad Unicorn Workflow Engine"
-      subtitle="Structured recruiter workflow on the left, candidate summaries and criteria intel on the right."
+      subtitle="Unicorns found definetly not on LinkedIn"
     >
       <section className="grid flex-1 gap-4 lg:min-h-[76vh] lg:grid-cols-[minmax(320px,1fr)_minmax(380px,1fr)]">
         <section className="grid min-h-0 grid-rows-[auto_1fr] gap-2">
@@ -218,39 +238,51 @@ export default function RecruitersPage() {
                     ) : (
                       latestResult.candidates.map((candidate, index) => {
                         const skills = splitSkillsSummary(candidate.skillsSummary);
+                        const experienceHighlights = splitExperienceSummary(candidate.experienceSummary);
 
                         return (
                           <ResultCard key={`${candidate.linkedinUrl}-${index}`}>
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <div className="text-sm font-semibold text-[color:var(--text-primary)]">{candidate.name}</div>
-                                <a
-                                  href={candidate.linkedinUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="mt-1 inline-block text-xs text-[color:var(--link-primary)] transition hover:text-[color:var(--link-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg-base)]"
-                                >
-                                  {candidate.linkedinUrl}
-                                </a>
+                            <div className="space-y-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <div className="text-sm font-semibold text-[color:var(--text-primary)]">{candidate.name}</div>
+                                  <a
+                                    href={candidate.linkedinUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-1 inline-block text-xs text-[color:var(--link-primary)] transition hover:text-[color:var(--link-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg-base)]"
+                                  >
+                                    {candidate.linkedinUrl}
+                                  </a>
+                                </div>
+                                <Pill tone="blue">LinkedIn</Pill>
                               </div>
-                              <Pill tone="blue">LinkedIn</Pill>
+                              <div className="text-xs text-[color:var(--text-tertiary)]">{candidate.headline}</div>
+                              <section className="text-sm leading-relaxed text-[color:var(--text-secondary)]">
+                                <strong className="text-[color:var(--text-primary)]">Skills:</strong>
+                                {skills.length === 0 ? (
+                                  <span className="ml-1">{candidate.skillsSummary}</span>
+                                ) : (
+                                  <ul className="mt-1 list-disc space-y-1 pl-5">
+                                    {skills.map((skill, skillIndex) => (
+                                      <li key={`${candidate.linkedinUrl}-skill-${skillIndex}`}>{skill}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </section>
+                              <section className="text-sm leading-relaxed text-[color:var(--text-secondary)]">
+                                <strong className="text-[color:var(--text-primary)]">Experience:</strong>
+                                {experienceHighlights.length === 0 ? (
+                                  <p className="mt-1">No experience summary provided.</p>
+                                ) : (
+                                  <ul className="mt-1 list-disc space-y-1 pl-5">
+                                    {experienceHighlights.map((item, itemIndex) => (
+                                      <li key={`${candidate.linkedinUrl}-experience-${itemIndex}`}>{item}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </section>
                             </div>
-                            <div className="mt-2 text-xs text-[color:var(--text-tertiary)]">{candidate.headline}</div>
-                            <div className="mt-2 text-sm leading-relaxed text-[color:var(--text-secondary)]">
-                              <strong className="text-[color:var(--text-primary)]">Skills:</strong>
-                              {skills.length === 0 ? (
-                                <span className="ml-1">{candidate.skillsSummary}</span>
-                              ) : (
-                                <ul className="mt-1 list-disc space-y-1 pl-5">
-                                  {skills.map((skill, skillIndex) => (
-                                    <li key={`${candidate.linkedinUrl}-skill-${skillIndex}`}>{skill}</li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
-                            <p className="mt-2 text-sm leading-relaxed text-[color:var(--text-secondary)]">
-                              <strong className="text-[color:var(--text-primary)]">Experience:</strong> {candidate.experienceSummary}
-                            </p>
                           </ResultCard>
                         );
                       })

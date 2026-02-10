@@ -1,15 +1,15 @@
 import { type ReactNode } from 'react';
 import Image from 'next/image';
 import { cn } from './cn';
+import { ThemeToggle } from './theme-toggle';
 
 type AppShellProps = {
-  title: string;
   subtitle: string;
   children: ReactNode;
   className?: string;
 };
 
-export function AppShell({ title, subtitle, children, className }: AppShellProps) {
+export function AppShell({ subtitle, children, className }: AppShellProps) {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[color:var(--bg-base)] text-[color:var(--text-primary)]">
       <div className="pointer-events-none absolute inset-0 app-grid-bg opacity-35" aria-hidden />
@@ -30,31 +30,36 @@ export function AppShell({ title, subtitle, children, className }: AppShellProps
         }}
         aria-hidden
       />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(5,2,10,0.62)_100%)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-[image:var(--scene-vignette)]" aria-hidden />
 
       <main
         className={cn(
-          'relative z-10 mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-4 pb-10 pt-4 sm:px-6 sm:pb-12 lg:px-10',
+          'relative z-10 mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-4 pb-8 pt-3 sm:px-6 sm:pb-10 lg:px-10',
           className,
         )}
       >
-        <header className="mb-8 flex flex-col items-center text-center sm:mb-10">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <Image
-              src="/unicornlogo.png"
-              alt="Bad Unicorn logo"
-              width={234}
-              height={234}
-              className="h-[198px] w-[198px] object-contain sm:h-[234px] sm:w-[234px]"
-              priority
-            />
-            <p className="text-2xl font-semibold tracking-[0.08em] text-[color:var(--text-primary)] uppercase sm:text-3xl">
-              Bad Unicorn
-            </p>
+        <header className="mb-5 sm:mb-6">
+          <div className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--bg-veil)] px-3 py-3 shadow-[0_20px_54px_-40px_var(--shadow-color)] backdrop-blur-xl sm:px-4 sm:py-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                <Image
+                  src="/unicornlogo.png"
+                  alt="Bad Unicorn logo"
+                  width={234}
+                  height={234}
+                  className="h-11 w-11 object-contain sm:h-12 sm:w-12"
+                  priority
+                />
+                <div className="min-w-0">
+                  <h1 className="truncate text-xl font-bold tracking-[0.04em] text-[color:var(--text-primary)] sm:text-2xl">
+                    Bad Unicorn
+                  </h1>
+                </div>
+              </div>
+              <ThemeToggle />
+            </div>
+            <p className="mt-2 text-xs leading-5 text-[color:var(--text-secondary)] sm:text-sm">{subtitle}</p>
           </div>
-          <p className="mt-1 max-w-xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
-            Unicorns, but sourced with evil.
-          </p>
         </header>
 
         {children}

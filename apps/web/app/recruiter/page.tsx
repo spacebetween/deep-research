@@ -145,7 +145,6 @@ export default function RecruiterPage() {
 
   return (
     <AppShell
-      title="Bad Unicorn Match Vault"
       subtitle="Interrogate peopleResearchAgent and surface high-signal LinkedIn candidates in real time."
     >
       <section className="grid flex-1 gap-4 lg:min-h-[76vh] lg:grid-cols-[minmax(320px,1fr)_minmax(380px,1fr)]">
