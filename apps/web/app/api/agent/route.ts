@@ -61,40 +61,30 @@ export async function POST(request: Request) {
 
     const mastra = getMastra();
     const agent = mastra.getAgent('linkedinCandidateSourcingAgent');
-    const conversation = (parsed.messages ?? [])
-      .map(message => `${message.role.toUpperCase()}: ${message.content}`)
-      .join('\n\n');
+    const incomingMessages = (parsed.messages ?? []).map(message => ({
+      role: message.role,
+      content: message.content,
+    }));
+    const normalizedQuery = parsed.query.trim();
+    const latestUserMessage = [...incomingMessages].reverse().find(message => message.role === 'user');
+    const latestMatchesQuery = latestUserMessage?.content.trim() === normalizedQuery;
 
-    const prompt = [
-      'You are continuing a recruiter sourcing conversation.',
-      conversation ? `Conversation so far:\n${conversation}` : null,
-      `Latest recruiter request:\n${parsed.query}`,
-      // `If you need more information run a calibration pass and return up to ${maxCandidates} qualified candidates in structured output.`,
-      'Ask only for missing fields between location and skills.',
-      'If any of those fields are missing, ask explicit follow-up questions and still run a best-effort search this turn.',
-      'Use responseType "results_with_clarification" when you have candidates plus follow-up questions.',
-      'Use responseType "clarification" with result=null when no usable candidates are available yet.',
-      'Use responseType "results" when no clarification is needed.',
-      'Only include candidates sourced from real tool results with LinkedIn URLs.',
-      'Do not fabricate names, employers, roles, or URLs.',
-    ]
-      .filter(Boolean)
-      .join('\n\n');
+    const messages =
+      incomingMessages.length === 0
+        ? [{ role: 'user' as const, content: normalizedQuery }]
+        : latestMatchesQuery
+          ? incomingMessages
+          : [...incomingMessages, { role: 'user' as const, content: normalizedQuery }];
 
-    const response = await agent.generate(
-      [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      {
-        structuredOutput: {
-          schema: agentApiResponseSchema,
-        },
-        maxSteps: 16,
+    const generationMessages = messages as Parameters<typeof agent.generate>[0];
+
+    const response = await agent.generate(generationMessages, {
+      system: ``,
+      structuredOutput: {
+        schema: agentApiResponseSchema,
       },
-    );
+      maxSteps: 16,
+    });
 
     return NextResponse.json(response.object);
   } catch (error) {
