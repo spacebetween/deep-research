@@ -30,12 +30,37 @@ MODEL=openai/gpt-4o-mini
 OPENAI_API_KEY=
 EXA_API_KEY=
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/deep_research  # optional in local dev, required in production
+
+# Microsoft Entra ID authentication
+AUTH_SECRET=                              # `npx auth secret` to generate
+AUTH_MICROSOFT_ENTRA_ID_ID=               # Application (client) ID from Azure
+AUTH_MICROSOFT_ENTRA_ID_SECRET=           # Client secret value from Azure
+AUTH_MICROSOFT_ENTRA_ID_TENANT_ID=        # Directory (tenant) ID — restricts login to your org (omit for multi-tenant)
 ```
 
 If `DATABASE_URL` is not set in local development, the app falls back to a local LibSQL file at `.mastra-dev/mastra.db`.
 In production, Postgres is used and you can set either:
 - `DATABASE_URL`
 - `AZURE_POSTGRESQL_DATABASE`, `AZURE_POSTGRESQL_HOST`, `AZURE_POSTGRESQL_PASSWORD`, `AZURE_POSTGRESQL_PORT`, `AZURE_POSTGRESQL_SSL`, `AZURE_POSTGRESQL_USER`
+
+## Microsoft Entra ID authentication setup
+
+The app uses [NextAuth.js v5](https://authjs.dev) with the Microsoft Entra ID provider. Users must sign in with their Microsoft 365 account to access the app.
+
+### Azure app registration
+
+1. Go to [Azure Portal → Microsoft Entra ID → App registrations](https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade).
+2. Click **New registration**.
+3. Set **Name** to e.g. "Bad Unicorn".
+4. Set **Supported account types** to "Accounts in this organizational directory only" (single tenant) or your preferred option.
+5. Set **Redirect URI** to **Web** → `http://localhost:3000/api/auth/callback/microsoft-entra-id` (for local dev).
+6. Click **Register**.
+7. Copy the **Application (client) ID** → `AUTH_MICROSOFT_ENTRA_ID_ID`.
+8. Copy the **Directory (tenant) ID** → `AUTH_MICROSOFT_ENTRA_ID_TENANT_ID`.
+9. Go to **Certificates & secrets** → **New client secret** → copy the **Value** → `AUTH_MICROSOFT_ENTRA_ID_SECRET`.
+10. Generate `AUTH_SECRET` by running `npx auth secret` or `openssl rand -base64 33`.
+
+For production, add a second redirect URI: `https://your-domain.com/api/auth/callback/microsoft-entra-id`.
 
 ## Monorepo structure
 
