@@ -36,6 +36,8 @@ Microsoft Entra ID (Azure AD) auth is configured via NextAuth.js v5 (`next-auth@
 
 The sign-in page form POSTs directly to `/api/auth/signin/microsoft-entra-id`. The `UserMenu` sign-out form POSTs to `/api/auth/signout`. The callback URL for the Azure app registration must be `<your-domain>/api/auth/callback/microsoft-entra-id`.
 
+Without the `AUTH_MICROSOFT_ENTRA_ID_*` secrets configured, the app still runs — unauthenticated users see the sign-in page and clicking "Sign in with Microsoft" will error. Once the Azure app is registered and secrets are provided, the full OAuth flow will work. See `README.md` § "Microsoft Entra ID authentication setup" for the Azure registration steps.
+
 ### Gotchas
 
 - The chat API (`POST /api/chat`) is **non-streaming** and can take 10-20 seconds per request while the AI agent processes and calls Exa tools.
