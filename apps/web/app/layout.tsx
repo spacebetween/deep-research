@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
+import { SessionProvider } from '../components/session-provider';
 import './globals.css';
 
 const themeInitScript = `
@@ -47,7 +48,9 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className={`${sans.variable} ${mono.variable} antialiased`}>{children}</body>
+      <body className={`${sans.variable} ${mono.variable} antialiased`}>
+        <SessionProvider>{children}</SessionProvider>
+      </body>
     </html>
   );
 }

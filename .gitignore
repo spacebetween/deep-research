@@ -9,3 +9,4 @@ dist
 .next
 apps/web/.next
 apps/web/.vercel
+*.tsbuildinfo

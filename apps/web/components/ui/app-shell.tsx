@@ -1,7 +1,11 @@
+'use client';
+
 import { type ReactNode } from 'react';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 import { cn } from './cn';
 import { ThemeToggle } from './theme-toggle';
+import { UserMenu } from './user-menu';
 
 type AppShellProps = {
   subtitle: string;
@@ -10,6 +14,8 @@ type AppShellProps = {
 };
 
 export function AppShell({ subtitle, children, className }: AppShellProps) {
+  const { data: session } = useSession();
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[color:var(--bg-base)] text-[color:var(--text-primary)]">
       <div className="pointer-events-none absolute inset-0 app-grid-bg opacity-35" aria-hidden />
@@ -56,7 +62,16 @@ export function AppShell({ subtitle, children, className }: AppShellProps) {
                   </h1>
                 </div>
               </div>
-              <ThemeToggle />
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                {session?.user && (
+                  <UserMenu
+                    name={session.user.name}
+                    email={session.user.email}
+                    image={session.user.image}
+                  />
+                )}
+              </div>
             </div>
             <p className="mt-2 text-xs leading-5 text-[color:var(--text-secondary)] sm:text-sm">{subtitle}</p>
           </div>
