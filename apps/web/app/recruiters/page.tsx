@@ -181,7 +181,7 @@ export default function RecruitersPage() {
               status={status}
               placeholder='Describe role, company DNA, location, and seniority. Example: "Staff Data Engineer at fintech companies in Chicago"'
               textareaLabel="Workflow search input"
-              submitLabel="Generate Candidates"
+              submitLabel="Summon Shortlist"
               isLoading={isLoading}
               onChange={setInput}
               onSubmit={onSubmit}
