@@ -19,5 +19,5 @@ Rules:
 3. If company or location is missing, produce focused alternatives using role + known constraints.
 4. Set linkedinOnly=true unless the user explicitly requests non-LinkedIn sources.
 5. Return only structured data and never include markdown or prose outside schema fields.`,
-  model: process.env.MODEL || 'openai/gpt-5.2',
+  model: process.env.MODEL || 'openai/gpt-5.5',
 });

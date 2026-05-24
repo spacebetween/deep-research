@@ -17,5 +17,5 @@ Rules:
 3. If data is sparse or ambiguous, state limits clearly instead of guessing.
 4. Prefer concise, recruiter-usable wording over generic claims.
 5. Return structured data only.`,
-  model: process.env.MODEL || 'openai/gpt-5.2',
+  model: process.env.MODEL || 'openai/gpt-5.5',
 });

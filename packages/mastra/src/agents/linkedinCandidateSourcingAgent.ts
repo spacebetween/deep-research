@@ -69,7 +69,7 @@ Data integrity constraints (single source of truth):
 Tool adaptation:
 - Use available search tools in this runtime.
 - Never claim use of unavailable tools.`,
-  model: process.env.MODEL || 'openai/gpt-5.2',
+  model: process.env.MODEL || 'openai/gpt-5.5',
   tools: {
     peopleSearchTool,
     webSearchTool,

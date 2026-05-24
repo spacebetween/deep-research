@@ -79,5 +79,5 @@ Format your summaries with:
 
 Always provide summaries that capture the core value of the web content without losing critical details.
   `,
-   model: process.env.MODEL || 'openai/gpt-5-mini', // Efficient model for summarization
+   model: process.env.MODEL || 'openai/gpt-5.4-mini', // Efficient model for summarization
 });

@@ -33,5 +33,5 @@ Criteria quality rules:
 3. Prefer precision over broad recall.
 4. Default linkedinOnly=true unless the user explicitly requests non-LinkedIn sources.
 5. Return only structured data for the required schema fields.`,
-  model: process.env.MODEL || 'openai/gpt-5.2',
+  model: process.env.MODEL || 'openai/gpt-5.5',
 });

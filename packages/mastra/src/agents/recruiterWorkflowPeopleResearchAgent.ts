@@ -40,7 +40,7 @@ Output JSON fields:
 }>
 
 Return valid JSON only.`,
-  model: process.env.MODEL || 'openai/gpt-5.2',
+  model: process.env.MODEL || 'openai/gpt-5.5',
   tools: {
     peopleSearchTool,
   },
