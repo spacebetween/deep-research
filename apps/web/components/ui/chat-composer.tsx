@@ -10,6 +10,7 @@ type ChatComposerProps = {
   placeholder: string;
   textareaLabel: string;
   submitLabel: string;
+  submitShortcutLabel?: string;
   loadingLabel?: string;
   isLoading: boolean;
   onChange: (nextValue: string) => void;
@@ -24,6 +25,7 @@ export function ChatComposer({
   placeholder,
   textareaLabel,
   submitLabel,
+  submitShortcutLabel = 'Ctrl+Enter',
   loadingLabel = 'Working...',
   isLoading,
   onChange,
@@ -96,7 +98,14 @@ export function ChatComposer({
             isLoading && 'unicorn-shimmer',
           )}
         >
-          {isLoading ? loadingLabel : submitLabel}
+          <span className="flex items-center gap-2">
+            <span>{isLoading ? loadingLabel : submitLabel}</span>
+            {!isLoading ? (
+              <span className="rounded-md border border-white/30 bg-white/10 px-1.5 py-0.5 text-[11px] font-medium tracking-wide text-white/90">
+                {submitShortcutLabel}
+              </span>
+            ) : null}
+          </span>
         </button>
       </div>
     </form>
