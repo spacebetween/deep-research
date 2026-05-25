@@ -13,7 +13,7 @@ export function ResultCard({ children, className }: ResultCardProps) {
       as="article"
       tone="muted"
       className={cn(
-        'rounded-xl border-[color:var(--border-soft)] p-4 transition hover:border-[color:var(--accent-primary-soft)] hover:shadow-[0_20px_42px_-30px_var(--shadow-accent)] sm:p-5',
+        'rounded-lg border-[color:var(--border-soft)] p-4 transition hover:border-[color:var(--accent-primary-soft)] hover:shadow-[0_14px_34px_-30px_var(--shadow-accent)] sm:p-5',
         className,
       )}
     >

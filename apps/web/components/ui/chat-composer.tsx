@@ -84,7 +84,7 @@ export function ChatComposer({
         disabled={isLoading}
         className={cn(
           textareaMinHeightClassName,
-          'w-full resize-y rounded-xl border border-[color:var(--input-border)] bg-[color:var(--input-bg)] px-3.5 py-3 text-sm leading-relaxed text-[color:var(--text-primary)] placeholder:text-[color:var(--text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg-base)] disabled:cursor-not-allowed disabled:opacity-70',
+          'w-full resize-y rounded border border-[color:var(--input-border)] bg-[color:var(--input-bg)] px-3.5 py-3 text-sm leading-relaxed text-[color:var(--text-primary)] placeholder:text-[color:var(--text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg-base)] disabled:cursor-not-allowed disabled:opacity-70',
         )}
       />
 
@@ -94,7 +94,7 @@ export function ChatComposer({
           type="submit"
           disabled={!canSubmit}
           className={cn(
-            'rounded-full bg-[image:var(--gradient-unicorn)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_20px_36px_-24px_var(--shadow-accent)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg-base)] disabled:cursor-not-allowed disabled:opacity-55',
+            'rounded bg-[color:var(--accent-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_16px_28px_-24px_var(--shadow-accent)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg-base)] disabled:cursor-not-allowed disabled:opacity-55',
             isLoading && 'unicorn-shimmer',
           )}
         >

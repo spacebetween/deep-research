@@ -20,7 +20,7 @@ export function Panel({ as: Component = 'section', tone = 'default', className, 
   return (
     <Component
       className={cn(
-        'rounded-2xl shadow-[0_20px_60px_-38px_var(--shadow-color)] backdrop-blur-xl transition-colors',
+        'rounded-lg shadow-[0_12px_34px_-30px_var(--shadow-color)] transition-colors',
         toneClasses[tone],
         className,
       )}

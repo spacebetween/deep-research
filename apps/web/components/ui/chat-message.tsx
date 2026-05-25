@@ -28,16 +28,16 @@ export function ChatMessage({ role, content, label, className }: ChatMessageProp
 
   return (
     <article className={cn('flex w-full', roleStyle.wrapper, className)}>
-      <div className={cn('max-w-[94%] rounded-2xl border p-4 sm:max-w-[88%] sm:p-5', roleStyle.bubble)}>
+      <div className={cn('max-w-[94%] rounded-lg border p-3 sm:max-w-[88%] sm:p-4', roleStyle.bubble)}>
         <div
           className={cn(
-            'mb-2 inline-flex rounded-full px-2.5 py-1 text-[0.68rem] font-semibold tracking-[0.08em]',
+            'mb-2 inline-flex rounded px-2 py-1 text-[0.68rem] font-semibold tracking-[0.08em]',
             roleStyle.label,
           )}
         >
           {label ?? (role === 'user' ? 'You' : 'Agent')}
         </div>
-        <p className="whitespace-pre-wrap text-sm leading-7 sm:text-[0.96rem]">{content}</p>
+        <p className="whitespace-pre-wrap text-sm leading-6">{content}</p>
       </div>
     </article>
   );
