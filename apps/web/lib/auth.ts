@@ -1,13 +1,44 @@
-import type { AuthOptions } from 'next-auth';
+import type { Account, AuthOptions, Profile } from 'next-auth';
 import AzureADProvider from 'next-auth/providers/azure-ad';
 
-const tenantId = process.env.AZURE_AD_TENANT_ID ?? '';
+const requiredEnv = (name: string) => {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    throw new Error(`${name} is required for Microsoft Entra sign-in.`);
+  }
+  return value;
+};
+
+const tenantId = requiredEnv('AZURE_AD_TENANT_ID');
+
+type EntraIdTokenClaims = {
+  tid?: string;
+};
+
+const decodeIdTokenClaims = (account?: Account | null): EntraIdTokenClaims => {
+  const idToken = account?.id_token;
+  if (!idToken) return {};
+
+  const [, payload] = idToken.split('.');
+  if (!payload) return {};
+
+  try {
+    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as EntraIdTokenClaims;
+  } catch {
+    return {};
+  }
+};
+
+const profileTenantId = (profile?: Profile): string | null => {
+  const tenant = profile && 'tid' in profile ? profile.tid : null;
+  return typeof tenant === 'string' ? tenant : null;
+};
 
 export const authOptions: AuthOptions = {
   providers: [
     AzureADProvider({
-      clientId: process.env.AZURE_AD_CLIENT_ID ?? '',
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET ?? '',
+      clientId: requiredEnv('AZURE_AD_CLIENT_ID'),
+      clientSecret: requiredEnv('AZURE_AD_CLIENT_SECRET'),
       tenantId,
       authorization: {
         params: {
@@ -17,13 +48,14 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ profile }) {
-      const profileTenantId = typeof profile?.tid === 'string' ? profile.tid : null;
-      return Boolean(tenantId && profileTenantId === tenantId);
+    async signIn({ account, profile }) {
+      const tokenTenantId = decodeIdTokenClaims(account).tid ?? profileTenantId(profile);
+      return Boolean(tenantId && tokenTenantId === tenantId);
     },
-    async jwt({ token, profile }) {
-      if (typeof profile?.tid === 'string') {
-        token.tid = profile.tid;
+    async jwt({ token, account, profile }) {
+      const tokenTenantId = decodeIdTokenClaims(account).tid ?? profileTenantId(profile);
+      if (tokenTenantId) {
+        token.tid = tokenTenantId;
       }
       return token;
     },

@@ -1,8 +1,16 @@
 import Image from 'next/image';
-import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '../../lib/auth';
+import { SignInButton } from './sign-in-button';
+
+const errorMessages: Record<string, string> = {
+  AccessDenied: 'Your Microsoft account signed in, but it was not accepted for the configured HRGO tenant.',
+  Callback: 'Microsoft returned to the app, but the sign-in callback could not be completed.',
+  Configuration: 'The sign-in provider is not configured correctly. Check the server environment variables.',
+  OAuthCallback: 'Microsoft sign-in returned an OAuth callback error.',
+  OAuthSignin: 'The app could not start Microsoft sign-in.',
+};
 
 export default async function LoginPage({
   searchParams,
@@ -17,7 +25,10 @@ export default async function LoginPage({
     redirect(callbackUrl);
   }
 
-  const signInHref = `/api/auth/signin/azure-ad?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+  const errorCode = params?.error;
+  const errorMessage = errorCode
+    ? errorMessages[errorCode] ?? `Sign-in failed with error code: ${errorCode}.`
+    : null;
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[color:var(--bg-base)] px-4 text-[color:var(--text-primary)]">
@@ -32,18 +43,13 @@ export default async function LoginPage({
           </div>
         </div>
 
-        {params?.error ? (
+        {errorMessage ? (
           <p className="mb-4 rounded-lg border border-[color:var(--danger)] bg-[color:var(--danger-soft)] px-3 py-2 text-sm text-[color:var(--status-danger-text)]">
-            Sign-in failed. Use an account from the configured HRGO tenant.
+            {errorMessage}
           </p>
         ) : null}
 
-        <Link
-          href={signInHref}
-          className="flex min-h-12 items-center justify-center rounded-lg bg-[image:var(--gradient-unicorn)] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_var(--shadow-accent)] transition hover:brightness-110"
-        >
-          Sign in with Microsoft
-        </Link>
+        <SignInButton callbackUrl={callbackUrl} />
       </section>
     </main>
   );
