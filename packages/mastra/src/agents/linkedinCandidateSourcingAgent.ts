@@ -1,5 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 import { peopleSearchTool } from '../tools/peopleSearchTool';
+import { scrapePageTool } from '../tools/scrapePageTool';
 import { webSearchTool } from '../tools/webSearchTool';
 
 export const linkedinCandidateSourcingAgent = new Agent({
@@ -39,6 +40,9 @@ Search process:
 1. Gather criteria (role, skills, location, seniority, exclusions).
 2. Build focused queries.
 3. Use available tools to find candidates.
+   - Use scrapePageTool when the user provides specific URLs or asks you to inspect a specific webpage.
+   - Use webSearchTool for broad web discovery when you do not already have a known URL.
+   - Use peopleSearchTool for candidate/profile discovery.
 4. Keep only strong matches.
 5. Deduplicate by LinkedIn URL.
 6. Never include candidates without LinkedIn URLs.
@@ -72,6 +76,7 @@ Tool adaptation:
   model: process.env.MODEL || 'openai/gpt-5.5',
   tools: {
     peopleSearchTool,
+    scrapePageTool,
     webSearchTool,
   },
 });
