@@ -1,15 +1,15 @@
 import type { Account, AuthOptions, Profile } from 'next-auth';
 import AzureADProvider from 'next-auth/providers/azure-ad';
 
-const requiredEnv = (name: string) => {
-  const value = process.env[name]?.trim();
-  if (!value) {
-    throw new Error(`${name} is required for Microsoft Entra sign-in.`);
-  }
-  return value;
-};
+const azureAdEnvNames = ['AZURE_AD_TENANT_ID', 'AZURE_AD_CLIENT_ID', 'AZURE_AD_CLIENT_SECRET'] as const;
 
-const tenantId = requiredEnv('AZURE_AD_TENANT_ID');
+const envValue = (name: (typeof azureAdEnvNames)[number]) => process.env[name]?.trim() ?? '';
+
+const providerEnvValue = (name: (typeof azureAdEnvNames)[number]) =>
+  envValue(name) || `${name.toLowerCase().replaceAll('_', '-')}-not-configured`;
+
+export const missingAzureAdEnvironmentVariables = () =>
+  azureAdEnvNames.filter(name => !envValue(name));
 
 type EntraIdTokenClaims = {
   tid?: string;
@@ -38,9 +38,9 @@ const profileTenantId = (profile?: Profile): string | null => {
 export const authOptions: AuthOptions = {
   providers: [
     AzureADProvider({
-      clientId: requiredEnv('AZURE_AD_CLIENT_ID'),
-      clientSecret: requiredEnv('AZURE_AD_CLIENT_SECRET'),
-      tenantId,
+      clientId: providerEnvValue('AZURE_AD_CLIENT_ID'),
+      clientSecret: providerEnvValue('AZURE_AD_CLIENT_SECRET'),
+      tenantId: providerEnvValue('AZURE_AD_TENANT_ID'),
       authorization: {
         params: {
           scope: 'openid profile email',
@@ -50,6 +50,7 @@ export const authOptions: AuthOptions = {
   ],
   callbacks: {
     async signIn({ account, profile }) {
+      const tenantId = envValue('AZURE_AD_TENANT_ID');
       const tokenTenantId = decodeIdTokenClaims(account).tid ?? profileTenantId(profile);
       return Boolean(tenantId && tokenTenantId === tenantId);
     },
