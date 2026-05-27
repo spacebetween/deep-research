@@ -8,16 +8,9 @@ type AppShellProps = {
   subtitle: string;
   children: ReactNode;
   className?: string;
-  observabilitySecret?: string;
 };
 
-const withSecret = (path: string, secret: string | undefined) => {
-  if (!secret) return path;
-  const separator = path.includes('?') ? '&' : '?';
-  return `${path}${separator}secret=${encodeURIComponent(secret)}`;
-};
-
-export function AppShell({ subtitle, children, className, observabilitySecret }: AppShellProps) {
+export function AppShell({ subtitle, children, className }: AppShellProps) {
   const footerSections = [
     {
       label: 'Workspace',
@@ -33,12 +26,12 @@ export function AppShell({ subtitle, children, className, observabilitySecret }:
       label: 'Observability',
       links: [
         {
-          href: withSecret('/observability', observabilitySecret),
+          href: '/observability',
           label: 'Telemetry dashboard',
           description: 'Request volume, failures, tool calls, and result signals.',
         },
         {
-          href: withSecret('/observability/sessions', observabilitySecret),
+          href: '/observability/sessions',
           label: 'Sessions',
           description: 'Grouped conversations and request journeys.',
         },

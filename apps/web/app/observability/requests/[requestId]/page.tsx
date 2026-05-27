@@ -3,14 +3,12 @@ import { getObservabilityRequestDetail } from '@deep-research/mastra';
 import { AppShell } from '../../../../components/ui/app-shell';
 import { Panel } from '../../../../components/ui/panel';
 import { Pill } from '../../../../components/ui/pill';
-import { isObservabilityAuthorized, withSecret } from '../../auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type RequestDetailPageProps = {
   params: Promise<{ requestId: string }>;
-  searchParams: Promise<{ secret?: string }>;
 };
 
 const formatValue = (value: unknown) => (value === null || value === undefined ? '' : String(value));
@@ -32,29 +30,17 @@ function JsonBlock({ value }: { value: unknown }) {
   );
 }
 
-export default async function RequestDetailPage({ params, searchParams }: RequestDetailPageProps) {
+export default async function RequestDetailPage({ params }: RequestDetailPageProps) {
   const { requestId } = await params;
-  const query = await searchParams;
-
-  if (!isObservabilityAuthorized(query.secret)) {
-    return (
-      <AppShell subtitle="Private request telemetry." observabilitySecret={query.secret}>
-        <Panel className="p-5">
-          <h2 className="text-lg font-semibold text-[color:var(--text-primary)]">Request locked</h2>
-          <p className="mt-2 text-sm text-[color:var(--text-secondary)]">Provide the configured observability secret.</p>
-        </Panel>
-      </AppShell>
-    );
-  }
 
   const detail = await getObservabilityRequestDetail(requestId);
 
   if (!detail) {
     return (
-      <AppShell subtitle="Request detail." observabilitySecret={query.secret}>
+      <AppShell subtitle="Request detail.">
         <Panel className="p-5">
           <h2 className="text-lg font-semibold text-[color:var(--text-primary)]">Request not found</h2>
-          <Link className="mt-3 inline-block text-sm text-[color:var(--link-primary)]" href={withSecret('/observability/sessions', query.secret)}>
+          <Link className="mt-3 inline-block text-sm text-[color:var(--link-primary)]" href="/observability/sessions">
             Back to sessions
           </Link>
         </Panel>
@@ -65,14 +51,11 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
   const request = detail.request as Record<string, unknown>;
 
   return (
-    <AppShell
-      subtitle="Full query, response, criteria, searches, tool calls, candidates, clicks, and feedback."
-      observabilitySecret={query.secret}
-    >
+    <AppShell subtitle="Full query, response, criteria, searches, tool calls, candidates, clicks, and feedback.">
       <section className="grid gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold tracking-[0.12em] text-[color:var(--text-tertiary)] uppercase">Request Detail</h2>
-          <Link className="text-sm text-[color:var(--link-primary)]" href={withSecret('/observability/sessions', query.secret)}>
+          <Link className="text-sm text-[color:var(--link-primary)]" href="/observability/sessions">
             Sessions
           </Link>
         </div>

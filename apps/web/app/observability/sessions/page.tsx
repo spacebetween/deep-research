@@ -3,39 +3,21 @@ import { getObservabilitySessions } from '@deep-research/mastra';
 import { AppShell } from '../../../components/ui/app-shell';
 import { Panel } from '../../../components/ui/panel';
 import { Pill } from '../../../components/ui/pill';
-import { isObservabilityAuthorized, withSecret } from '../auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type SessionsPageProps = {
-  searchParams: Promise<{ secret?: string }>;
-};
-
 const formatValue = (value: unknown) => (value === null || value === undefined ? '' : String(value));
 
-export default async function SessionsPage({ searchParams }: SessionsPageProps) {
-  const params = await searchParams;
-
-  if (!isObservabilityAuthorized(params.secret)) {
-    return (
-      <AppShell subtitle="Private session telemetry." observabilitySecret={params.secret}>
-        <Panel className="p-5">
-          <h2 className="text-lg font-semibold text-[color:var(--text-primary)]">Sessions locked</h2>
-          <p className="mt-2 text-sm text-[color:var(--text-secondary)]">Provide the configured observability secret.</p>
-        </Panel>
-      </AppShell>
-    );
-  }
-
+export default async function SessionsPage() {
   const sessions = await getObservabilitySessions();
 
   return (
-    <AppShell subtitle="Grouped session and conversation journeys across recruiter searches." observabilitySecret={params.secret}>
+    <AppShell subtitle="Grouped session and conversation journeys across recruiter searches.">
       <section className="grid gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold tracking-[0.12em] text-[color:var(--text-tertiary)] uppercase">Sessions</h2>
-          <Link className="text-sm text-[color:var(--link-primary)]" href={withSecret('/observability', params.secret)}>
+          <Link className="text-sm text-[color:var(--link-primary)]" href="/observability">
             Dashboard
           </Link>
         </div>
@@ -72,7 +54,7 @@ export default async function SessionsPage({ searchParams }: SessionsPageProps) 
                   <span className="text-xs text-[color:var(--text-tertiary)]">{request.completedAt}</span>
                   <span>{request.statusCode}</span>
                   <span className="truncate text-[color:var(--text-secondary)]">{formatValue(request.userQuery)}</span>
-                  <Link className="text-[color:var(--link-primary)]" href={withSecret(`/observability/requests/${request.requestId}`, params.secret)}>
+                  <Link className="text-[color:var(--link-primary)]" href={`/observability/requests/${request.requestId}`}>
                     View request
                   </Link>
                 </div>

@@ -3,14 +3,9 @@ import { getObservabilitySummary } from '@deep-research/mastra';
 import { AppShell } from '../../components/ui/app-shell';
 import { Panel } from '../../components/ui/panel';
 import { Pill } from '../../components/ui/pill';
-import { isObservabilityAuthorized, withSecret } from './auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-type ObservabilityPageProps = {
-  searchParams: Promise<{ secret?: string }>;
-};
 
 const formatValue = (value: unknown) => (value === null || value === undefined ? '' : String(value));
 
@@ -126,35 +121,17 @@ function RequestsOverTimeChart({ points }: { points: RequestTimelinePoint[] }) {
   );
 }
 
-export default async function ObservabilityPage({ searchParams }: ObservabilityPageProps) {
-  const params = await searchParams;
-
-  if (!isObservabilityAuthorized(params.secret)) {
-    return (
-      <AppShell subtitle="Private request and agent telemetry." observabilitySecret={params.secret}>
-        <Panel className="p-5">
-          <h2 className="text-lg font-semibold text-[color:var(--text-primary)]">Observability locked</h2>
-          <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
-            Provide the configured observability secret to view request telemetry.
-          </p>
-        </Panel>
-      </AppShell>
-    );
-  }
-
+export default async function ObservabilityPage() {
   const summary = await getObservabilitySummary();
   const totals = summary.totals as Record<string, unknown>;
   const requestTimeline = summary.requestTimeline as RequestTimelinePoint[];
 
   return (
-    <AppShell
-      subtitle="Request volume, session history, agent results, tool calls, and failure signals."
-      observabilitySecret={params.secret}
-    >
+    <AppShell subtitle="Request volume, session history, agent results, tool calls, and failure signals.">
       <section className="grid gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold tracking-[0.12em] text-[color:var(--text-tertiary)] uppercase">Overview</h2>
-          <Link className="text-sm text-[color:var(--link-primary)]" href={withSecret('/observability/sessions', params.secret)}>
+          <Link className="text-sm text-[color:var(--link-primary)]" href="/observability/sessions">
             Sessions
           </Link>
         </div>
@@ -223,7 +200,7 @@ export default async function ObservabilityPage({ searchParams }: ObservabilityP
                     <td className="py-2 pr-4">{formatValue(request.duration_ms)}</td>
                     <td className="py-2 pr-4">{formatValue(request.candidate_count)}</td>
                     <td className="max-w-[360px] truncate py-2 pr-4 text-[color:var(--text-secondary)]">
-                      <Link className="text-[color:var(--link-primary)]" href={withSecret(`/observability/requests/${formatValue(request.request_id)}`, params.secret)}>
+                      <Link className="text-[color:var(--link-primary)]" href={`/observability/requests/${formatValue(request.request_id)}`}>
                         {formatValue(request.user_query) || formatValue(request.request_id)}
                       </Link>
                     </td>
@@ -283,7 +260,7 @@ export default async function ObservabilityPage({ searchParams }: ObservabilityP
                   {formatValue(event.feedback_value || event.candidate_url)}
                 </span>
                 {event.request_id ? (
-                  <Link className="text-[color:var(--link-primary)]" href={withSecret(`/observability/requests/${formatValue(event.request_id)}`, params.secret)}>
+                  <Link className="text-[color:var(--link-primary)]" href={`/observability/requests/${formatValue(event.request_id)}`}>
                     View request
                   </Link>
                 ) : (

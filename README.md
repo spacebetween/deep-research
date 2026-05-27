@@ -47,10 +47,10 @@ Optional first-party observability:
 - `OBSERVABILITY_CAPTURE_MESSAGES`: `off`, `summary`, or `full`; defaults to `full` in development and `summary` in production.
 - `OBSERVABILITY_CAPTURE_RESULTS`: `off`, `summary`, or `full`; defaults to `full` in development and `summary` in production.
 - `OBSERVABILITY_CAPTURE_FULL_CONTENT`: set to `true` to persist full tool-result content; defaults to `false`.
-- `OBSERVABILITY_ADMIN_SECRET`: required to view `/observability?secret=...` outside local development.
 - `OBSERVABILITY_RETENTION_DAYS`: deletes older request/tool records on startup, defaults to `30`.
 
 When enabled without `DATABASE_URL` in local development, observability stores data in `.mastra-dev/observability.db`.
+Observability dashboards are protected by the normal Microsoft Entra sign-in flow and are visible to authenticated users.
 
 Authentication uses Microsoft Entra ID through the Next.js app. Configure the Entra app registration with these web redirect URIs:
 - `http://localhost:3000/api/auth/callback/azure-ad`
@@ -104,7 +104,7 @@ The workflow builds Next.js standalone output and deploys `release.zip` to the A
   - Response body: `{ "text": "..." }`
 - `POST /api/agent`: recruiter sourcing chat endpoint. Accepts optional `sessionId` and `conversationId`; returns `x-request-id`.
 - `POST /api/observability/events`: records LinkedIn clicks and result-quality feedback against a request/session/conversation.
-- `GET /observability`: local/debug observability dashboard. In production, use `/observability?secret=<OBSERVABILITY_ADMIN_SECRET>`.
-- `GET /observability/sessions`: grouped session/conversation explorer.
-- `GET /observability/requests/{requestId}`: full request detail with query, response, criteria, searches, tool calls, candidates, clicks, and feedback.
+- `GET /observability`: authenticated observability dashboard.
+- `GET /observability/sessions`: authenticated grouped session/conversation explorer.
+- `GET /observability/requests/{requestId}`: authenticated full request detail with query, response, criteria, searches, tool calls, candidates, clicks, and feedback.
 - `GET /api/health`: basic health probe.
