@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getMastra } from '@deep-research/mastra';
+import {
+  getMastra,
+  normalizeClientId,
+  recordObservabilityRequest,
+  runWithObservabilityContext,
+} from '@deep-research/mastra';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,6 +19,8 @@ const requestSchema = z.object({
   query: z.string().min(1),
   maxCandidates: z.number().int().min(1).max(20).optional(),
   messages: z.array(messageSchema).optional(),
+  sessionId: z.string().optional(),
+  conversationId: z.string().optional(),
 });
 
 const recruiterCriteriaSchema = z.object({
@@ -54,10 +61,20 @@ const agentApiResponseSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
+  const startedAt = new Date();
+  const startedMs = Date.now();
+  let sessionId: string | null = null;
+  let conversationId: string | null = null;
+  let normalizedQuery: string | null = null;
+  let messagesForTelemetry: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
   try {
     const body = await request.json();
     const parsed = requestSchema.parse(body);
     const maxCandidates = parsed.maxCandidates ?? 5;
+    sessionId = normalizeClientId(parsed.sessionId);
+    conversationId = normalizeClientId(parsed.conversationId);
 
     const mastra = getMastra();
     const agent = mastra.getAgent('linkedinCandidateSourcingAgent');
@@ -65,7 +82,7 @@ export async function POST(request: Request) {
       role: message.role,
       content: message.content,
     }));
-    const normalizedQuery = parsed.query.trim();
+    normalizedQuery = parsed.query.trim();
     const latestUserMessage = [...incomingMessages].reverse().find(message => message.role === 'user');
     const latestMatchesQuery = latestUserMessage?.content.trim() === normalizedQuery;
 
@@ -77,25 +94,84 @@ export async function POST(request: Request) {
           : [...incomingMessages, { role: 'user' as const, content: normalizedQuery }];
 
     const generationMessages = messages as Parameters<typeof agent.generate>[0];
+    messagesForTelemetry = messages;
 
-    const response = await agent.generate(generationMessages, {
-      system: ``,
-      structuredOutput: {
-        schema: agentApiResponseSchema,
-      },
-      maxSteps: 16,
+    const response = await runWithObservabilityContext(
+      { requestId, sessionId, conversationId, route: '/api/agent' },
+      () =>
+        agent.generate(generationMessages, {
+          system: ``,
+          structuredOutput: {
+            schema: agentApiResponseSchema,
+          },
+          maxSteps: 16,
+        }),
+    );
+
+    const statusCode = 200;
+    await recordObservabilityRequest({
+      requestId,
+      route: '/api/agent',
+      method: 'POST',
+      sessionId,
+      conversationId,
+      startedAt: startedAt.toISOString(),
+      completedAt: new Date().toISOString(),
+      durationMs: Date.now() - startedMs,
+      statusCode,
+      responseType: response.object.responseType,
+      errorMessage: null,
+      errorType: null,
+      userQuery: normalizedQuery,
+      latestUserMessage: [...messagesForTelemetry].reverse().find(message => message.role === 'user')?.content ?? null,
+      messageCount: messagesForTelemetry.length,
+      assistantMessage: response.object.assistantMessage,
+      criteria: response.object.result?.criteria ?? null,
+      clarification: response.object.clarification,
+      queries: response.object.result?.queries ?? [],
+      candidateCount: response.object.result?.candidates.length ?? 0,
+      messages: messagesForTelemetry,
+      candidates: response.object.result?.candidates ?? [],
     });
 
-    return NextResponse.json(response.object);
+    return NextResponse.json(response.object, {
+      status: statusCode,
+      headers: { 'x-request-id': requestId },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected error';
-    const status = /required|invalid|parse/i.test(message) ? 400 : 500;
+    const status = error instanceof z.ZodError || /required|invalid|parse/i.test(message) ? 400 : 500;
+
+    await recordObservabilityRequest({
+      requestId,
+      route: '/api/agent',
+      method: 'POST',
+      sessionId,
+      conversationId,
+      startedAt: startedAt.toISOString(),
+      completedAt: new Date().toISOString(),
+      durationMs: Date.now() - startedMs,
+      statusCode: status,
+      responseType: null,
+      errorMessage: message,
+      errorType: error instanceof Error ? error.name : 'UnknownError',
+      userQuery: normalizedQuery,
+      latestUserMessage: [...messagesForTelemetry].reverse().find(msg => msg.role === 'user')?.content ?? null,
+      messageCount: messagesForTelemetry.length,
+      assistantMessage: null,
+      criteria: null,
+      clarification: null,
+      queries: [],
+      candidateCount: 0,
+      messages: messagesForTelemetry,
+      candidates: [],
+    });
 
     return NextResponse.json(
       {
         error: message,
       },
-      { status },
+      { status, headers: { 'x-request-id': requestId } },
     );
   }
 }

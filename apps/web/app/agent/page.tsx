@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
+import { createConversationId, getOrCreateSessionId, trackUserEvent } from '../../lib/client-observability';
 import { AppShell } from '../../components/ui/app-shell';
 import { ChatComposer } from '../../components/ui/chat-composer';
 import { ChatInstructions } from '../../components/ui/chat-instructions';
@@ -110,16 +111,34 @@ const formatMissingFields = (fields: ClarificationField[]) => {
 type ConversationMessage = {
   role: 'user' | 'assistant';
   content: string;
+  requestId?: string;
   result?: RecruiterAgentResult;
   clarification?: AgentClarification;
   responseType?: AgentApiResponse['responseType'];
 };
+
+const feedbackOptions = [
+  { value: 'useful_shortlist', label: 'Useful shortlist' },
+  { value: 'wrong_profile_type', label: 'Wrong profile type' },
+  { value: 'too_broad', label: 'Too broad' },
+  { value: 'too_few_candidates', label: 'Too few candidates' },
+  { value: 'bad_location', label: 'Bad location' },
+  { value: 'missing_required_skills', label: 'Missing skills' },
+] as const;
 
 export default function AgentPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [status, setStatus] = useState('Ready');
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [submittedFeedback, setSubmittedFeedback] = useState<Record<string, string>>({});
+  const conversationIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    setSessionId(getOrCreateSessionId());
+    conversationIdRef.current = createConversationId();
+  }, []);
 
   const historyForApi = useMemo(
     () => messages.map(message => ({ role: message.role, content: message.content })),
@@ -136,6 +155,7 @@ export default function AgentPage() {
 
   const latestResult = latestAssistantState?.result ?? null;
   const latestClarification = latestAssistantState?.clarification ?? null;
+  const latestRequestId = latestAssistantState?.requestId;
 
   async function onSubmit() {
     const trimmed = input.trim();
@@ -154,10 +174,13 @@ export default function AgentPage() {
           query: trimmed,
           maxCandidates: 5,
           messages: [...historyForApi, { role: 'user', content: trimmed }],
+          sessionId,
+          conversationId: conversationIdRef.current,
         }),
       });
 
       const payload = await response.json();
+      const requestId = response.headers.get('x-request-id') ?? undefined;
 
       if (!response.ok) {
         const maybeError = payload && typeof payload === 'object' ? (payload as { error?: string }).error : null;
@@ -189,6 +212,7 @@ export default function AgentPage() {
         {
           role: 'assistant',
           content: agentResponse.assistantMessage,
+          requestId,
           responseType: agentResponse.responseType,
           clarification: agentResponse.clarification ?? undefined,
           result: agentResponse.result ?? undefined,
@@ -208,6 +232,37 @@ export default function AgentPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function trackLinkedInClick(candidate: RecruiterAgentResult['candidates'][number], requestId?: string) {
+    trackUserEvent({
+      requestId,
+      sessionId,
+      conversationId: conversationIdRef.current,
+      eventType: 'linkedin_click',
+      candidateUrl: candidate.linkedinUrl,
+      metadata: {
+        candidateName: candidate.name,
+        headline: candidate.headline,
+      },
+    });
+  }
+
+  function submitFeedback(value: (typeof feedbackOptions)[number]['value'], requestId?: string) {
+    if (!requestId) return;
+
+    setSubmittedFeedback(current => ({ ...current, [requestId]: value }));
+    trackUserEvent({
+      requestId,
+      sessionId,
+      conversationId: conversationIdRef.current,
+      eventType: 'result_feedback',
+      feedbackValue: value,
+      metadata: {
+        candidateCount: latestResult?.candidates.length ?? 0,
+        responseType: latestAssistantState?.responseType ?? null,
+      },
+    });
   }
 
   return (
@@ -354,6 +409,7 @@ export default function AgentPage() {
                                         href={candidate.linkedinUrl}
                                         target="_blank"
                                         rel="noreferrer"
+                                        onClick={() => trackLinkedInClick(candidate, latestRequestId)}
                                         className="mt-1 inline-block text-xs text-[color:var(--link-primary)] transition hover:text-[color:var(--link-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg-base)]"
                                       >
                                         {candidate.linkedinUrl}
@@ -393,6 +449,34 @@ export default function AgentPage() {
                         )}
                       </div>
                     </div>
+
+                    {latestRequestId ? (
+                      <section className="space-y-2 rounded-lg border border-[color:var(--border-soft)] p-3">
+                        <h3 className="text-xs font-medium tracking-[0.14em] text-[color:var(--text-tertiary)] uppercase">
+                          Result Quality
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {feedbackOptions.map(option => {
+                            const selected = submittedFeedback[latestRequestId] === option.value;
+
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => submitFeedback(option.value, latestRequestId)}
+                                className={`rounded-md border px-2.5 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--focus-ring)] ${
+                                  selected
+                                    ? 'border-[color:var(--accent-primary)] bg-[color:var(--accent-primary-soft)] text-[color:var(--text-primary)]'
+                                    : 'border-[color:var(--border-soft)] bg-[color:var(--bg-muted)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]'
+                                }`}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ) : null}
                   </>
                 ) : (
                   <p className="text-sm text-[color:var(--text-secondary)]">

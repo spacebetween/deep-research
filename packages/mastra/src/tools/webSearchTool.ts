@@ -2,6 +2,7 @@ import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import Exa from 'exa-js';
 import 'dotenv/config';
+import { getObservabilityContext, recordObservabilityToolCall } from '../observability';
 
 const getExaClient = () => {
   const apiKey = process.env.EXA_API_KEY;
@@ -21,10 +22,25 @@ export const webSearchTool = createTool({
   execute: async (inputData, context) => {
     console.log('Executing web search tool');
     const { query } = inputData;
+    const startedMs = Date.now();
+    const observabilityContext = getObservabilityContext();
 
     try {
       if (!process.env.EXA_API_KEY) {
         console.error('Error: EXA_API_KEY not found in environment variables');
+        await recordObservabilityToolCall({
+          requestId: observabilityContext?.requestId ?? null,
+          sessionId: observabilityContext?.sessionId ?? null,
+          conversationId: observabilityContext?.conversationId ?? null,
+          toolName: 'web-search',
+          query,
+          requestedCount: 2,
+          linkedinOnly: null,
+          returnedCount: 0,
+          durationMs: Date.now() - startedMs,
+          errorMessage: 'Missing API key',
+          results: [],
+        });
         return { results: [], error: 'Missing API key' };
       }
       const exa = getExaClient();
@@ -36,6 +52,19 @@ export const webSearchTool = createTool({
 
       if (!results || results.length === 0) {
         console.log('No search results found');
+        await recordObservabilityToolCall({
+          requestId: observabilityContext?.requestId ?? null,
+          sessionId: observabilityContext?.sessionId ?? null,
+          conversationId: observabilityContext?.conversationId ?? null,
+          toolName: 'web-search',
+          query,
+          requestedCount: 2,
+          linkedinOnly: null,
+          returnedCount: 0,
+          durationMs: Date.now() - startedMs,
+          errorMessage: 'No results found',
+          results: [],
+        });
         return { results: [], error: 'No results found' };
       }
 
@@ -95,6 +124,20 @@ Provide a concise summary that captures the key information relevant to the rese
         }
       }
 
+      await recordObservabilityToolCall({
+        requestId: observabilityContext?.requestId ?? null,
+        sessionId: observabilityContext?.sessionId ?? null,
+        conversationId: observabilityContext?.conversationId ?? null,
+        toolName: 'web-search',
+        query,
+        requestedCount: 2,
+        linkedinOnly: null,
+        returnedCount: processedResults.length,
+        durationMs: Date.now() - startedMs,
+        errorMessage: null,
+        results: processedResults,
+      });
+
       return {
         results: processedResults,
       };
@@ -102,6 +145,19 @@ Provide a concise summary that captures the key information relevant to the rese
       console.error('Error searching the web:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error details:', errorMessage);
+      await recordObservabilityToolCall({
+        requestId: observabilityContext?.requestId ?? null,
+        sessionId: observabilityContext?.sessionId ?? null,
+        conversationId: observabilityContext?.conversationId ?? null,
+        toolName: 'web-search',
+        query,
+        requestedCount: 2,
+        linkedinOnly: null,
+        returnedCount: 0,
+        durationMs: Date.now() - startedMs,
+        errorMessage,
+        results: [],
+      });
       return {
         results: [],
         error: errorMessage,

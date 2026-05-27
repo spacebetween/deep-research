@@ -2,6 +2,7 @@ import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import Exa from 'exa-js';
 import 'dotenv/config';
+import { getObservabilityContext, recordObservabilityToolCall } from '../observability';
 
 const getExaClient = () => {
   const apiKey = process.env.EXA_API_KEY;
@@ -41,10 +42,25 @@ export const peopleSearchTool = createTool({
   }),
   execute: async inputData => {
     const { query, numResults, linkedinOnly } = inputData;
+    const startedMs = Date.now();
+    const context = getObservabilityContext();
 
     try {
       if (!process.env.EXA_API_KEY) {
         console.error('Error: EXA_API_KEY not found in environment variables');
+        await recordObservabilityToolCall({
+          requestId: context?.requestId ?? null,
+          sessionId: context?.sessionId ?? null,
+          conversationId: context?.conversationId ?? null,
+          toolName: 'people-search',
+          query,
+          requestedCount: numResults,
+          linkedinOnly,
+          returnedCount: 0,
+          durationMs: Date.now() - startedMs,
+          errorMessage: 'Missing API key',
+          results: [],
+        });
         return { results: [], error: 'Missing API key' };
       }
       const exa = getExaClient();
@@ -58,22 +74,64 @@ export const peopleSearchTool = createTool({
       const { results } = await exa.search(query, searchOptions);
 
       if (!results || results.length === 0) {
+        await recordObservabilityToolCall({
+          requestId: context?.requestId ?? null,
+          sessionId: context?.sessionId ?? null,
+          conversationId: context?.conversationId ?? null,
+          toolName: 'people-search',
+          query,
+          requestedCount: numResults,
+          linkedinOnly,
+          returnedCount: 0,
+          durationMs: Date.now() - startedMs,
+          errorMessage: 'No results found',
+          results: [],
+        });
         return { results: [], error: 'No results found' };
       }
 
-      return {
-        results: results.map(result => ({
+      const mappedResults = results.map(result => ({
           title: result.title || '',
           url: result.url,
           publishedDate: result.publishedDate || null,
           author: result.author || null,
           summary: result.text ? result.text.substring(0, 240) : null,
           content: result.text || '',
-        })),
+        }));
+
+      await recordObservabilityToolCall({
+        requestId: context?.requestId ?? null,
+        sessionId: context?.sessionId ?? null,
+        conversationId: context?.conversationId ?? null,
+        toolName: 'people-search',
+        query,
+        requestedCount: numResults,
+        linkedinOnly,
+        returnedCount: mappedResults.length,
+        durationMs: Date.now() - startedMs,
+        errorMessage: null,
+        results: mappedResults,
+      });
+
+      return {
+        results: mappedResults,
       };
     } catch (error) {
       console.error('Error searching for people:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await recordObservabilityToolCall({
+        requestId: context?.requestId ?? null,
+        sessionId: context?.sessionId ?? null,
+        conversationId: context?.conversationId ?? null,
+        toolName: 'people-search',
+        query,
+        requestedCount: numResults,
+        linkedinOnly,
+        returnedCount: 0,
+        durationMs: Date.now() - startedMs,
+        errorMessage,
+        results: [],
+      });
       return {
         results: [],
         error: errorMessage,
