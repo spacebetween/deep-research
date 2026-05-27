@@ -84,6 +84,9 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
             <Pill tone="neutral">{formatValue(request.duration_ms)} ms</Pill>
             <Pill tone="neutral">{formatValue(request.candidate_count)} candidates</Pill>
           </div>
+          <div className="mt-3 text-sm text-[color:var(--text-secondary)]">
+            User: {formatValue(request.user_email || request.user_name || request.user_id || 'Unknown')}
+          </div>
           <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
             <div>
               <h3 className="mb-1 text-xs font-semibold tracking-[0.12em] text-[color:var(--text-tertiary)] uppercase">Full Query</h3>
@@ -157,9 +160,12 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
           <h3 className="mb-3 text-xs font-semibold tracking-[0.12em] text-[color:var(--text-tertiary)] uppercase">Clicks And Feedback</h3>
           <div className="space-y-2">
             {detail.events.map((event, index) => (
-              <div key={`event-${index}`} className="grid gap-2 rounded-lg border border-[color:var(--border-soft)] p-3 text-sm md:grid-cols-[160px_160px_1fr]">
+              <div key={`event-${index}`} className="grid gap-2 rounded-lg border border-[color:var(--border-soft)] p-3 text-sm md:grid-cols-[160px_160px_180px_1fr]">
                 <span className="text-xs text-[color:var(--text-tertiary)]">{formatValue(event.created_at)}</span>
                 <span>{formatValue(event.event_type)}</span>
+                <span className="truncate text-[color:var(--text-secondary)]">
+                  {formatValue(event.user_email || event.user_name || event.user_id)}
+                </span>
                 <span className="truncate text-[color:var(--text-secondary)]">
                   {formatValue(event.feedback_value || event.candidate_url)}
                 </span>

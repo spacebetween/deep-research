@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { normalizeClientId, recordObservabilityUserEvent } from '@deep-research/mastra';
 import { z } from 'zod';
+import { getCurrentObservabilityUser } from '../../../../lib/server-observability-user';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,9 +22,13 @@ export async function POST(request: Request) {
   try {
     const parsed = eventSchema.parse(await request.json());
     const requestId = normalizeClientId(parsed.requestId);
+    const observabilityUser = await getCurrentObservabilityUser(request);
 
     await recordObservabilityUserEvent({
       requestId,
+      userId: observabilityUser.userId,
+      userEmail: observabilityUser.userEmail,
+      userName: observabilityUser.userName,
       sessionId: normalizeClientId(parsed.sessionId),
       conversationId: normalizeClientId(parsed.conversationId),
       eventType: parsed.eventType,

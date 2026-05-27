@@ -1,6 +1,9 @@
 export type SessionRequestRow = {
   session_id: string | null;
   conversation_id: string | null;
+  user_id?: string | null;
+  user_email?: string | null;
+  user_name?: string | null;
   request_id: string;
   completed_at: string;
   status_code: number;
@@ -21,6 +24,9 @@ export type SessionSummary = {
   latestQuery: string | null;
   latestResponseType: string | null;
   totalDurationMs: number;
+  userId: string | null;
+  userEmail: string | null;
+  userName: string | null;
   requests: Array<{
     requestId: string;
     completedAt: string;
@@ -65,6 +71,9 @@ export const summarizeSessions = (rows: SessionRequestRow[]): SessionSummary[] =
         latestQuery: row.user_query,
         latestResponseType: row.response_type,
         totalDurationMs: row.duration_ms,
+        userId: row.user_id ?? null,
+        userEmail: row.user_email ?? null,
+        userName: row.user_name ?? null,
         requests: [request],
       });
       continue;
@@ -77,6 +86,9 @@ export const summarizeSessions = (rows: SessionRequestRow[]): SessionSummary[] =
     existing.latestQuery = row.user_query;
     existing.latestResponseType = row.response_type;
     existing.totalDurationMs += row.duration_ms;
+    existing.userId = existing.userId ?? row.user_id ?? null;
+    existing.userEmail = existing.userEmail ?? row.user_email ?? null;
+    existing.userName = existing.userName ?? row.user_name ?? null;
     existing.requests.push(request);
   }
 

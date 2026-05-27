@@ -22,6 +22,9 @@ export type ObservabilityRequestRecord = {
   requestId: string;
   route: string;
   method: string;
+  userId: string | null;
+  userEmail: string | null;
+  userName: string | null;
   sessionId: string | null;
   conversationId: string | null;
   startedAt: string;
@@ -65,6 +68,9 @@ export type ObservabilityToolCallRecord = {
 
 export type ObservabilityUserEventRecord = {
   requestId: string | null;
+  userId: string | null;
+  userEmail: string | null;
+  userName: string | null;
   sessionId: string | null;
   conversationId: string | null;
   eventType: 'linkedin_click' | 'result_feedback';
@@ -159,6 +165,9 @@ const ensureSchema = async (executor: QueryExecutor) => {
         request_id TEXT PRIMARY KEY,
         route TEXT NOT NULL,
         method TEXT NOT NULL,
+        user_id TEXT,
+        user_email TEXT,
+        user_name TEXT,
         session_id TEXT,
         conversation_id TEXT,
         started_at TEXT NOT NULL,
@@ -207,6 +216,9 @@ const ensureSchema = async (executor: QueryExecutor) => {
       CREATE TABLE IF NOT EXISTS observability_tool_calls (
         id BIGSERIAL PRIMARY KEY,
         request_id TEXT,
+        user_id TEXT,
+        user_email TEXT,
+        user_name TEXT,
         session_id TEXT,
         conversation_id TEXT,
         tool_name TEXT NOT NULL,
@@ -224,6 +236,9 @@ const ensureSchema = async (executor: QueryExecutor) => {
       CREATE TABLE IF NOT EXISTS observability_user_events (
         id BIGSERIAL PRIMARY KEY,
         request_id TEXT,
+        user_id TEXT,
+        user_email TEXT,
+        user_name TEXT,
         session_id TEXT,
         conversation_id TEXT,
         event_type TEXT NOT NULL,
@@ -233,6 +248,7 @@ const ensureSchema = async (executor: QueryExecutor) => {
         created_at TEXT NOT NULL
       )
     `);
+    await ensureOptionalColumns(executor);
     return;
   }
 
@@ -241,6 +257,9 @@ const ensureSchema = async (executor: QueryExecutor) => {
       request_id TEXT PRIMARY KEY,
       route TEXT NOT NULL,
       method TEXT NOT NULL,
+      user_id TEXT,
+      user_email TEXT,
+      user_name TEXT,
       session_id TEXT,
       conversation_id TEXT,
       started_at TEXT NOT NULL,
@@ -289,6 +308,9 @@ const ensureSchema = async (executor: QueryExecutor) => {
     CREATE TABLE IF NOT EXISTS observability_tool_calls (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       request_id TEXT,
+      user_id TEXT,
+      user_email TEXT,
+      user_name TEXT,
       session_id TEXT,
       conversation_id TEXT,
       tool_name TEXT NOT NULL,
@@ -306,6 +328,9 @@ const ensureSchema = async (executor: QueryExecutor) => {
     CREATE TABLE IF NOT EXISTS observability_user_events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       request_id TEXT,
+      user_id TEXT,
+      user_email TEXT,
+      user_name TEXT,
       session_id TEXT,
       conversation_id TEXT,
       event_type TEXT NOT NULL,
@@ -315,6 +340,34 @@ const ensureSchema = async (executor: QueryExecutor) => {
       created_at TEXT NOT NULL
     )
   `);
+
+  await ensureOptionalColumns(executor);
+};
+
+const ensureOptionalColumns = async (executor: QueryExecutor) => {
+  const requestsColumns = [
+    ['observability_requests', 'user_id'],
+    ['observability_requests', 'user_email'],
+    ['observability_requests', 'user_name'],
+    ['observability_user_events', 'user_id'],
+    ['observability_user_events', 'user_email'],
+    ['observability_user_events', 'user_name'],
+  ];
+
+  for (const [table, column] of requestsColumns) {
+    try {
+      await executor.execute(
+        isPostgres()
+          ? `ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} TEXT`
+          : `ALTER TABLE ${table} ADD COLUMN ${column} TEXT`,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/duplicate column|already exists/i.test(message)) {
+        throw error;
+      }
+    }
+  }
 };
 
 const pruneExpiredRecords = async (executor: QueryExecutor) => {
@@ -355,15 +408,18 @@ export const recordObservabilityRequest = async (record: ObservabilityRequestRec
     const executor = await getExecutor();
     await executor.execute(
       `INSERT INTO observability_requests (
-        request_id, route, method, session_id, conversation_id, started_at, completed_at, duration_ms,
+        request_id, route, method, user_id, user_email, user_name, session_id, conversation_id, started_at, completed_at, duration_ms,
         status_code, response_type, error_message, error_type, user_query, latest_user_message,
         message_count, assistant_message, criteria_json, clarification_json, queries_json, candidate_count,
         capture_messages, capture_results, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         record.requestId,
         record.route,
         record.method,
+        record.userId,
+        record.userEmail,
+        record.userName,
         record.sessionId,
         record.conversationId,
         record.startedAt,
@@ -471,10 +527,13 @@ export const recordObservabilityUserEvent = async (record: ObservabilityUserEven
     const executor = await getExecutor();
     await executor.execute(
       `INSERT INTO observability_user_events (
-        request_id, session_id, conversation_id, event_type, candidate_url, feedback_value, metadata_json, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        request_id, user_id, user_email, user_name, session_id, conversation_id, event_type, candidate_url, feedback_value, metadata_json, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         record.requestId,
+        record.userId,
+        record.userEmail,
+        record.userName,
         record.sessionId,
         record.conversationId,
         record.eventType,
@@ -495,7 +554,7 @@ export const getObservabilitySessions = async () => {
 
   const executor = await getExecutor();
   const rows = await executor.select<SessionRequestRow>(`
-    SELECT session_id, conversation_id, request_id, completed_at, status_code, response_type,
+    SELECT session_id, conversation_id, user_id, user_email, user_name, request_id, completed_at, status_code, response_type,
       user_query, candidate_count, duration_ms
     FROM observability_requests
     ORDER BY completed_at DESC
@@ -511,7 +570,7 @@ export const getObservabilityRequestDetail = async (requestId: string) => {
 
   const executor = await getExecutor();
   const requests = await executor.select(`
-    SELECT request_id, route, method, session_id, conversation_id, started_at, completed_at,
+    SELECT request_id, route, method, user_id, user_email, user_name, session_id, conversation_id, started_at, completed_at,
       duration_ms, status_code, response_type, error_message, error_type, user_query,
       latest_user_message, message_count, assistant_message, criteria_json, clarification_json,
       queries_json, candidate_count, capture_messages, capture_results
@@ -542,7 +601,7 @@ export const getObservabilityRequestDetail = async (requestId: string) => {
     ORDER BY created_at ASC
   `, [requestId]);
   const events = await executor.select(`
-    SELECT event_type, candidate_url, feedback_value, metadata_json, created_at
+    SELECT event_type, user_id, user_email, user_name, candidate_url, feedback_value, metadata_json, created_at
     FROM observability_user_events
     WHERE request_id = ?
     ORDER BY created_at ASC
@@ -586,7 +645,7 @@ export const getObservabilitySummary = async () => {
     FROM observability_requests
   `);
   const recentRequests = await executor.select(`
-    SELECT request_id, route, session_id, conversation_id, completed_at, duration_ms, status_code,
+    SELECT request_id, route, user_id, user_email, user_name, session_id, conversation_id, completed_at, duration_ms, status_code,
       response_type, user_query, latest_user_message, assistant_message, candidate_count, error_message
     FROM observability_requests
     ORDER BY completed_at DESC
@@ -614,7 +673,7 @@ export const getObservabilitySummary = async () => {
     LIMIT 25
   `);
   const recentEvents = await executor.select(`
-    SELECT event_type, request_id, session_id, conversation_id, candidate_url, feedback_value, created_at
+    SELECT event_type, request_id, user_id, user_email, user_name, session_id, conversation_id, candidate_url, feedback_value, created_at
     FROM observability_user_events
     ORDER BY created_at DESC
     LIMIT 25

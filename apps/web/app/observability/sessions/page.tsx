@@ -50,6 +50,9 @@ export default async function SessionsPage({ searchParams }: SessionsPageProps) 
                 <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
                   {session.startedAt} to {session.lastSeenAt}
                 </p>
+                <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
+                  User: {session.userEmail || session.userName || session.userId || 'Unknown'}
+                </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Pill tone="blue">{session.requestCount} requests</Pill>

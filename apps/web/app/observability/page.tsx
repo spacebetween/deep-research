@@ -202,6 +202,7 @@ export default async function ObservabilityPage({ searchParams }: ObservabilityP
                 <tr>
                   <th className="py-2 pr-4">Completed</th>
                   <th className="py-2 pr-4">Route</th>
+                  <th className="py-2 pr-4">User</th>
                   <th className="py-2 pr-4">Status</th>
                   <th className="py-2 pr-4">Type</th>
                   <th className="py-2 pr-4">Ms</th>
@@ -214,6 +215,9 @@ export default async function ObservabilityPage({ searchParams }: ObservabilityP
                   <tr key={`${formatValue(request.request_id)}-${index}`} className="border-t border-[color:var(--border-soft)]">
                     <td className="py-2 pr-4 text-[color:var(--text-secondary)]">{formatValue(request.completed_at)}</td>
                     <td className="py-2 pr-4">{formatValue(request.route)}</td>
+                    <td className="max-w-[220px] truncate py-2 pr-4 text-[color:var(--text-secondary)]">
+                      {formatValue(request.user_email || request.user_name || request.user_id)}
+                    </td>
                     <td className="py-2 pr-4">{formatValue(request.status_code)}</td>
                     <td className="py-2 pr-4">{formatValue(request.response_type)}</td>
                     <td className="py-2 pr-4">{formatValue(request.duration_ms)}</td>
@@ -269,9 +273,12 @@ export default async function ObservabilityPage({ searchParams }: ObservabilityP
           <h2 className="mb-3 text-sm font-semibold tracking-[0.12em] text-[color:var(--text-tertiary)] uppercase">Recent Clicks And Feedback</h2>
           <div className="space-y-2">
             {summary.recentEvents.map((event, index) => (
-              <div key={`${formatValue(event.created_at)}-event-${index}`} className="grid gap-2 rounded-lg border border-[color:var(--border-soft)] p-3 text-sm md:grid-cols-[160px_180px_1fr_140px]">
+              <div key={`${formatValue(event.created_at)}-event-${index}`} className="grid gap-2 rounded-lg border border-[color:var(--border-soft)] p-3 text-sm md:grid-cols-[160px_180px_180px_1fr_140px]">
                 <span className="text-xs text-[color:var(--text-tertiary)]">{formatValue(event.created_at)}</span>
                 <span>{formatValue(event.event_type)}</span>
+                <span className="truncate text-[color:var(--text-secondary)]">
+                  {formatValue(event.user_email || event.user_name || event.user_id)}
+                </span>
                 <span className="truncate text-[color:var(--text-secondary)]">
                   {formatValue(event.feedback_value || event.candidate_url)}
                 </span>

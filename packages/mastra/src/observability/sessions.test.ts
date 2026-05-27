@@ -14,6 +14,9 @@ test('summarizes sessions by session and conversation identifiers', () => {
       user_query: 'Find data engineers',
       candidate_count: 4,
       duration_ms: 1200,
+      user_id: 'user-1',
+      user_email: 'recruiter@example.com',
+      user_name: 'Recruiter One',
     },
     {
       session_id: 'session-a',
@@ -25,6 +28,9 @@ test('summarizes sessions by session and conversation identifiers', () => {
       user_query: 'Actually Manchester only',
       candidate_count: 0,
       duration_ms: 300,
+      user_id: 'user-1',
+      user_email: 'recruiter@example.com',
+      user_name: 'Recruiter One',
     },
   ]);
 
@@ -40,6 +46,9 @@ test('summarizes sessions by session and conversation identifiers', () => {
       latestQuery: 'Actually Manchester only',
       latestResponseType: null,
       totalDurationMs: 1500,
+      userId: 'user-1',
+      userEmail: 'recruiter@example.com',
+      userName: 'Recruiter One',
       requests: [
         {
           requestId: 'request-1',

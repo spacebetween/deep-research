@@ -13,6 +13,7 @@ const tenantId = requiredEnv('AZURE_AD_TENANT_ID');
 
 type EntraIdTokenClaims = {
   tid?: string;
+  oid?: string;
 };
 
 const decodeIdTokenClaims = (account?: Account | null): EntraIdTokenClaims => {
@@ -53,14 +54,17 @@ export const authOptions: AuthOptions = {
       return Boolean(tenantId && tokenTenantId === tenantId);
     },
     async jwt({ token, account, profile }) {
-      const tokenTenantId = decodeIdTokenClaims(account).tid ?? profileTenantId(profile);
+      const tokenClaims = decodeIdTokenClaims(account);
+      const tokenTenantId = tokenClaims.tid ?? profileTenantId(profile);
       if (tokenTenantId) {
         token.tid = tokenTenantId;
       }
+      token.userId = tokenClaims.oid ?? token.sub;
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
+        session.user.id = token.userId ?? token.sub ?? null;
         session.user.name = session.user.name ?? token.name ?? null;
         session.user.email = session.user.email ?? token.email ?? null;
       }

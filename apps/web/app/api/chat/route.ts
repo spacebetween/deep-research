@@ -6,6 +6,7 @@ import {
   recordObservabilityRequest,
   runWithObservabilityContext,
 } from '@deep-research/mastra';
+import { getCurrentObservabilityUser, type ObservabilityUser } from '../../../lib/server-observability-user';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,9 +29,11 @@ export async function POST(request: Request) {
   const startedMs = Date.now();
   let sessionId: string | null = null;
   let conversationId: string | null = null;
+  let observabilityUser: ObservabilityUser = { userId: null, userEmail: null, userName: null };
   let messagesForTelemetry: Array<{ role: 'user' | 'assistant'; content: string }> = [];
 
   try {
+    observabilityUser = await getCurrentObservabilityUser(request);
     const body = await request.json();
     const parsed = requestSchema.parse(body);
     sessionId = normalizeClientId(parsed.sessionId);
@@ -58,6 +61,9 @@ export async function POST(request: Request) {
       requestId,
       route: '/api/chat',
       method: 'POST',
+      userId: observabilityUser.userId,
+      userEmail: observabilityUser.userEmail,
+      userName: observabilityUser.userName,
       sessionId,
       conversationId,
       startedAt: startedAt.toISOString(),
@@ -88,6 +94,9 @@ export async function POST(request: Request) {
       requestId,
       route: '/api/chat',
       method: 'POST',
+      userId: observabilityUser.userId,
+      userEmail: observabilityUser.userEmail,
+      userName: observabilityUser.userName,
       sessionId,
       conversationId,
       startedAt: startedAt.toISOString(),
