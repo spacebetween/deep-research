@@ -38,7 +38,7 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
 
   if (!isObservabilityAuthorized(query.secret)) {
     return (
-      <AppShell subtitle="Private request telemetry.">
+      <AppShell subtitle="Private request telemetry." observabilitySecret={query.secret}>
         <Panel className="p-5">
           <h2 className="text-lg font-semibold text-[color:var(--text-primary)]">Request locked</h2>
           <p className="mt-2 text-sm text-[color:var(--text-secondary)]">Provide the configured observability secret.</p>
@@ -51,7 +51,7 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
 
   if (!detail) {
     return (
-      <AppShell subtitle="Request detail.">
+      <AppShell subtitle="Request detail." observabilitySecret={query.secret}>
         <Panel className="p-5">
           <h2 className="text-lg font-semibold text-[color:var(--text-primary)]">Request not found</h2>
           <Link className="mt-3 inline-block text-sm text-[color:var(--link-primary)]" href={withSecret('/observability/sessions', query.secret)}>
@@ -65,7 +65,10 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
   const request = detail.request as Record<string, unknown>;
 
   return (
-    <AppShell subtitle="Full query, response, criteria, searches, tool calls, candidates, clicks, and feedback.">
+    <AppShell
+      subtitle="Full query, response, criteria, searches, tool calls, candidates, clicks, and feedback."
+      observabilitySecret={query.secret}
+    >
       <section className="grid gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold tracking-[0.12em] text-[color:var(--text-tertiary)] uppercase">Request Detail</h2>

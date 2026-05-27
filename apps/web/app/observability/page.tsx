@@ -131,7 +131,7 @@ export default async function ObservabilityPage({ searchParams }: ObservabilityP
 
   if (!isObservabilityAuthorized(params.secret)) {
     return (
-      <AppShell subtitle="Private request and agent telemetry.">
+      <AppShell subtitle="Private request and agent telemetry." observabilitySecret={params.secret}>
         <Panel className="p-5">
           <h2 className="text-lg font-semibold text-[color:var(--text-primary)]">Observability locked</h2>
           <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
@@ -147,7 +147,10 @@ export default async function ObservabilityPage({ searchParams }: ObservabilityP
   const requestTimeline = summary.requestTimeline as RequestTimelinePoint[];
 
   return (
-    <AppShell subtitle="Request volume, session history, agent results, tool calls, and failure signals.">
+    <AppShell
+      subtitle="Request volume, session history, agent results, tool calls, and failure signals."
+      observabilitySecret={params.secret}
+    >
       <section className="grid gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold tracking-[0.12em] text-[color:var(--text-tertiary)] uppercase">Overview</h2>

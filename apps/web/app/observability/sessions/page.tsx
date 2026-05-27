@@ -19,7 +19,7 @@ export default async function SessionsPage({ searchParams }: SessionsPageProps) 
 
   if (!isObservabilityAuthorized(params.secret)) {
     return (
-      <AppShell subtitle="Private session telemetry.">
+      <AppShell subtitle="Private session telemetry." observabilitySecret={params.secret}>
         <Panel className="p-5">
           <h2 className="text-lg font-semibold text-[color:var(--text-primary)]">Sessions locked</h2>
           <p className="mt-2 text-sm text-[color:var(--text-secondary)]">Provide the configured observability secret.</p>
@@ -31,7 +31,7 @@ export default async function SessionsPage({ searchParams }: SessionsPageProps) 
   const sessions = await getObservabilitySessions();
 
   return (
-    <AppShell subtitle="Grouped session and conversation journeys across recruiter searches.">
+    <AppShell subtitle="Grouped session and conversation journeys across recruiter searches." observabilitySecret={params.secret}>
       <section className="grid gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold tracking-[0.12em] text-[color:var(--text-tertiary)] uppercase">Sessions</h2>
