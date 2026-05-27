@@ -17,5 +17,5 @@ Rules:
 3. Keep each summary concise and readable.
 4. If details are missing, say so clearly instead of inventing content.
 5. Return only structured data.`,
-  model: process.env.MODEL || 'openai/gpt-5.2',
+  model: process.env.MODEL || 'openai/gpt-5.5',
 });

@@ -41,7 +41,7 @@ Guidelines:
 - Return valid JSON only.
 - Prefer precision over volume.
 - Never fabricate person identities or profile details.`,
-  model: process.env.MODEL || 'openai/gpt-5.2',
+  model: process.env.MODEL || 'openai/gpt-5.5',
   tools: {
     peopleSearchTool,
   },

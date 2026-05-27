@@ -26,7 +26,7 @@ Open `http://localhost:3000`.
 Create `.env` in the repo root:
 
 ```bash
-MODEL=openai/gpt-4o-mini
+MODEL=openai/gpt-5.5
 OPENAI_API_KEY=
 EXA_API_KEY=
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/deep_research  # optional in local dev, required in production
