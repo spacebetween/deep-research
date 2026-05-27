@@ -19,7 +19,7 @@ export default async function LoginPage({
 }) {
   const session = await getServerSession(authOptions);
   const params = await searchParams;
-  const callbackUrl = params?.callbackUrl || '/recruiters';
+  const callbackUrl = params?.callbackUrl || '/agent';
 
   if (session) {
     redirect(callbackUrl);
