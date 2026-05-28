@@ -2,19 +2,10 @@ import type { Metadata } from 'next';
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 
-const themeInitScript = `
-(() => {
-  try {
-    const storageKey = 'bad-unicorn-theme';
-    const savedTheme = localStorage.getItem(storageKey);
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const nextTheme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : prefersDark ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', nextTheme);
-  } catch {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
-})();
-`;
+const siteUrl = new URL('https://bad-unicorn.hrgo.co.uk');
+const socialTitle = 'Bad Unicorn | Finding candidates with attitude';
+const socialDescription =
+  'Turn vague hiring manager vibes into names, LinkedIn links, and candidate evidence without wrestling Boolean strings all afternoon.';
 
 const sans = Space_Grotesk({
   variable: '--font-sans',
@@ -29,11 +20,40 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Bad Unicorn',
-  description: 'Bad Unicorn recruiter intelligence workspace',
+  metadataBase: siteUrl,
+  applicationName: 'Bad Unicorn',
+  title: {
+    default: socialTitle,
+    template: '%s | Bad Unicorn',
+  },
+  description: socialDescription,
+  alternates: {
+    canonical: '/',
+  },
   icons: {
     icon: '/unicornlogo.png',
     apple: '/unicornlogo.png',
+  },
+  openGraph: {
+    title: socialTitle,
+    description: socialDescription,
+    url: '/',
+    siteName: 'Bad Unicorn',
+    type: 'website',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'Bad Unicorn recruiter intelligence workspace',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: socialTitle,
+    description: socialDescription,
+    images: ['/twitter-image'],
   },
 };
 

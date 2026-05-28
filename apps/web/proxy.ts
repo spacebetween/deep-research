@@ -7,6 +7,8 @@ const isPublicPath = (pathname: string) =>
   pathname.startsWith('/api/auth') ||
   pathname.startsWith('/_next') ||
   pathname === '/favicon.ico' ||
+  pathname === '/opengraph-image' ||
+  pathname === '/twitter-image' ||
   pathname === '/unicornlogo.png';
 
 export async function proxy(request: NextRequest) {
