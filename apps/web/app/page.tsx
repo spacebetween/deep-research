@@ -21,16 +21,15 @@ const quickStarts = [
 ] as const;
 
 const taglines = [
-  'Find people on LinkedIn, without donating your margin to the usual corporate toll booth.',
+  'Find people on LinkedIn, without donating your margin to the usual corporate overlords.',
   'Because "just search LinkedIn harder" is not a sourcing strategy.',
   'For when your perfect candidate is definitely hiding behind "Open to work" and three stale job titles.',
   'LinkedIn search, minus the part where you sell a kidney for another seat.',
-  'Turning vague hiring manager vibes into names, links, and fewer existential recruiter sighs.',
+  'Turning vague hiring manager vibes into names, links, and fewer sighs.',
   'For permanent recruiters who know the best candidates are never in the first 200 results.',
   'Sourcing candidates so you can spend less time wrestling Boolean strings like it is 2009.',
   'Find the people LinkedIn swears do not exist until your competitor hires them.',
   'Built for the moment after someone says, "Can we just see a few more profiles?"',
-  'Candidate sourcing with receipts, not just another spreadsheet of LinkedIn maybes.',
   'Because the phrase "quick LinkedIn search" has ruined enough afternoons.',
   'For recruiters who have already tried adding more brackets to the Boolean spell.',
 ] as const;
