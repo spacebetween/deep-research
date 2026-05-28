@@ -4,7 +4,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { createConversationId, getOrCreateSessionId, trackUserEvent } from '../../lib/client-observability';
-import { ThemeToggle } from '../../components/ui/theme-toggle';
 import {
   agentApiResponseSchema,
   legacyRecruiterApiResponseSchema,
@@ -71,11 +70,24 @@ export default function AgentPage() {
   const [submittedFeedback, setSubmittedFeedback] = useState<Record<string, string>>({});
   const conversationIdRef = useRef<string | null>(null);
   const signalsRef = useRef<HTMLElement | null>(null);
+  const autoRunStartedRef = useRef(false);
   const [isComposing, setIsComposing] = useState(false);
 
   useEffect(() => {
-    setSessionId(getOrCreateSessionId());
+    const nextSessionId = getOrCreateSessionId();
+    setSessionId(nextSessionId);
     conversationIdRef.current = createConversationId();
+
+    if (autoRunStartedRef.current || typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const autoRunPrompt = params.get('prompt')?.trim();
+    const shouldAutoRun = params.get('autorun') === '1';
+    if (!shouldAutoRun || !autoRunPrompt) return;
+
+    autoRunStartedRef.current = true;
+    window.history.replaceState(null, '', window.location.pathname);
+    void submitPrompt(autoRunPrompt, nextSessionId);
   }, []);
 
   useEffect(() => {
@@ -123,8 +135,8 @@ export default function AgentPage() {
   const candidateLocation = getCandidateLocation(latestResult);
   const canSubmit = !isLoading && input.trim().length > 0;
 
-  async function onSubmit() {
-    const trimmed = input.trim();
+  async function submitPrompt(prompt: string, nextSessionId = sessionId) {
+    const trimmed = prompt.trim();
     if (!trimmed || isLoading) return;
 
     setInput('');
@@ -140,7 +152,7 @@ export default function AgentPage() {
           query: trimmed,
           maxCandidates: 5,
           messages: [...historyForApi, { role: 'user', content: trimmed }],
-          sessionId,
+          sessionId: nextSessionId,
           conversationId: conversationIdRef.current,
         }),
       });
@@ -198,6 +210,10 @@ export default function AgentPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function onSubmit() {
+    await submitPrompt(input);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -287,7 +303,6 @@ export default function AgentPage() {
                 <h1 className="truncate text-lg font-semibold text-[#ddb7ff]">Bad Unicorn</h1>
               </div>
             </div>
-            <ThemeToggle />
           </div>
 
           <nav className="flex gap-2 overflow-x-auto border-b border-[#4d4354]/60 px-4 pb-3" aria-label="Workspace views">

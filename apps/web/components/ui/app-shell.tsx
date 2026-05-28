@@ -2,7 +2,6 @@ import { type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from './cn';
-import { ThemeToggle } from './theme-toggle';
 
 type AppShellProps = {
   subtitle: string;
@@ -74,7 +73,7 @@ export function AppShell({ subtitle, children, className }: AppShellProps) {
       >
         <header className="mb-5 sm:mb-6">
           <div className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--bg-veil)] px-3 py-3 shadow-[0_20px_54px_-40px_var(--shadow-color)] backdrop-blur-xl sm:px-4 sm:py-3.5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
               <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
                 <Image
                   src="/unicornlogo.png"
@@ -90,7 +89,6 @@ export function AppShell({ subtitle, children, className }: AppShellProps) {
                   </h1>
                 </div>
               </div>
-              <ThemeToggle />
             </div>
             <p className="mt-2 text-xs leading-5 text-[color:var(--text-secondary)] sm:text-sm">{subtitle}</p>
           </div>
